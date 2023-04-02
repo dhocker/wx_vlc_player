@@ -1,6 +1,6 @@
 #
 # WX VLC PLayer - Simple music player
-# © 2023 by Dave Hocker (AtHomeX10@gmail.com)
+# Copyright © 2023 by Dave Hocker (AtHomeX10@gmail.com)
 #
 # License: GPL v3. See LICENSE.md.
 # This work is based on the original work documented below. It was
@@ -41,7 +41,7 @@ import random
 from urllib.parse import unquote
 import wx  # 2.8 ... 4.0.6
 import wx.lib.newevent
-import vlc
+from vlc_media_adapter import VLCMediaAdapter
 from configuration import Configuration
 import version
 
@@ -51,6 +51,7 @@ import sys
 
 app_name = "wxVLCPlayer"
 app_title = "wxPython VLC Music Player"
+
 
 class Player(wx.Frame):
     """The main window has to deal with events.
@@ -92,16 +93,10 @@ class Player(wx.Frame):
         self.Bind(wx.EVT_TIMER, self._on_timer_tick, self._timer)
 
         # VLC player controls
-        self._vlc_instance = vlc.Instance()
-        self._player = self._vlc_instance.media_player_new()
-        self._player.audio_set_volume(self._current_volume)
+        self._adapter = VLCMediaAdapter(media_player_end_handler=self._on_next_song_event)
+        self._adapter.volume = self._current_volume
 
-        # VLC events to be handled
-        self._event_manager = self._player.event_manager()
-        # Track/song end
-        self._event_manager.event_attach(vlc.EventType.MediaPlayerEndReached, self._on_next_song_event)
-
-        # Relayed events from VLC to the player frame
+        # Relayed events from the media adapter to the player frame
         self._song_ended_event, EVT_SONG_ENDED = wx.lib.newevent.NewEvent()
         self.Bind(EVT_SONG_ENDED, self._play_next_song)
 
@@ -370,7 +365,7 @@ class Player(wx.Frame):
         self._now_playing_item = 0
 
         # Queue the first file
-        self._player.set_media(None)
+        self._adapter.queue_media_file(None)
         self._playlist_items = len(songs)
         self._now_playing_item = -1
 
@@ -390,22 +385,16 @@ class Player(wx.Frame):
         file_name = self._playlist_files[item]
         if os.path.exists(file_name):
             self._now_playing_file_name = file_name
-            self.Media = self._vlc_instance.media_new(str(file_name))
-            self._player.set_media(self.Media)
+            self._adapter.queue_media_file(file_name)
             self._set_current_song_label(basename(file_name))
             self._set_current_playlist_label(f"{self._current_playlist_name} ({self._playlist_items} items)")
 
-            # set the window id where to render VLC's video output
+            # set the window id where to render video output
             handle = self._playlist_panel.GetHandle()
-            if sys.platform.startswith('linux'):  # for Linux using the X Server
-                self._player.set_xwindow(handle)
-            elif sys.platform == "win32":  # for Windows
-                self._player.set_hwnd(handle)
-            elif sys.platform == "darwin":  # for MacOS
-                self._player.set_nsobject(handle)
+            self._adapter.set_video_window(handle)
 
             # set the volume slider to the current volume
-            self._player.audio_set_volume(self._current_volume)
+            self._adapter.volume = self._current_volume
             self._volume_slider.SetValue(self._current_volume)
 
             self._now_playing_item = item
@@ -471,7 +460,7 @@ class Player(wx.Frame):
 
     def _play_to_pause(self):
         # Play to Pause
-        self._player.pause()
+        self._adapter.pause()
         self._timer.Stop()
         self._play_button.SetLabel("Play")
 
@@ -482,8 +471,8 @@ class Player(wx.Frame):
             self.on_open_playlist(None)
             return
         else:
-            self._player.audio_set_volume(self._current_volume)
-            if self._player.play():  # == -1:
+            self._adapter.volume = self._current_volume
+            if self._adapter.play():  # == -1:
                 self._show_error_dlg("Unable to play.")
                 return
             self._timer.Start(1000)  # XXX millisecs
@@ -495,12 +484,12 @@ class Player(wx.Frame):
         Is the media player playing a song
         :return:
         """
-        return self._player.is_playing()
+        return self._adapter.is_playing
 
     def _on_stop_clicked(self, evt):
         """Stop the player.
         """
-        self._player.stop()
+        self._adapter.stop()
         # reset the time slider
         self._time_slider.SetValue(0)
         self._timer.Stop()
@@ -536,11 +525,11 @@ class Player(wx.Frame):
             # since the self.player.get_length can change while playing,
             # re-set the timeslider to the correct range.
             # NOTE that player time is in milliseconds. Hence, the adjustment here.
-            song_length = int(self._player.get_length() / 1000)
+            song_length = int(self._adapter.media_length)
             self._time_slider.SetRange(0, song_length)
 
             # update the time on the slider
-            song_time = int(self._player.get_time() / 1000)
+            song_time = int(self._adapter.media_time)
             self._time_slider.SetValue(song_time)
 
             # Update song position in normal time format
@@ -553,7 +542,7 @@ class Player(wx.Frame):
         return result
 
     def _on_time_slider_change(self, cmd_evt):
-        self._player.set_time(self._time_slider.GetValue() * 1000)
+        self._adapter.media_time = self._time_slider.GetValue()
 
     def _on_random_changed(self, event):
         # The random button changed. Not currently used.
@@ -562,14 +551,14 @@ class Player(wx.Frame):
     def _on_mute_clicked(self, evt):
         """Toggle Mute/Unmute according to the audio button.
         """
-        volume = self._player.audio_get_volume()
+        volume = self._adapter.volume
         # Invert the volume
         if volume == 0:
-            self._player.audio_set_volume(self._current_volume)
+            self._adapter.volume = self._current_volume
             self._volume_slider.SetValue(self._current_volume)
             self._mute_button.SetLabel("Mute")
         else:
-            self._player.audio_set_volume(0)
+            self._adapter.volume = 0
             self._volume_slider.SetValue(0)
             self._mute_button.SetLabel("Unmute")
 
@@ -578,15 +567,13 @@ class Player(wx.Frame):
         """
         self._current_volume = self._volume_slider.GetValue()
         # TODO Save volume setting
-        # vlc.MediaPlayer.audio_set_volume returns 0 if success, -1 otherwise
-        if self._player.audio_set_volume(self._current_volume) == -1:
-            self._show_error_dlg("Failed to set volume")
-        # print(f"Volume: {self._current_volume}")
+        self._adapter.volume = self._current_volume
 
-    def _on_next_song_event(self, event):
+    def _on_next_song_event(self):
         """
-        This event comes from the VLC media player. Here we simply
-        relay the event to the wx Player frame. We do this because the
+        This event comes from the media adapter. Here we simply
+        relay the event to the main wx Player frame. We do this because the
+        adapter may be running on a different thread. Specifically, the
         VLC API documentation says that VLC is not reentrant.
         """
         wx_evt = self._song_ended_event(attr1="Song ended")
@@ -606,7 +593,7 @@ class Player(wx.Frame):
             "\n" \
             f"OS Name: {os_name}\n" \
             f"Python App: {basename(__file__)}\n" \
-            f"libVLC Version: {vlc.__libvlc_version__}\n" \
+            f"Media Adapter {self._adapter.name} Version: {self._adapter.version}\n" \
             f"wx Module: {wx.__name__}\n" \
             f"wxPython Version: {wx.version()}\n"
 
@@ -642,3 +629,5 @@ if __name__ == "__main__":
         player.on_close()
     except:
         print("Did not run on_close")
+        # Since on_close did not run, try to save the current configuration
+        Configuration.save_configuration()

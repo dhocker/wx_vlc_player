@@ -1,6 +1,6 @@
 #
 # media_adapter.py - an abstraction of a media player like VLC
-# © 2023 by Dave Hocker (AtHomeX10@gmail.com)
+# Copyright © 2023 by Dave Hocker (AtHomeX10@gmail.com)
 #
 # License: GPL v3. See LICENSE.md.
 # This work is based on the original work documented below. It was
@@ -12,8 +12,8 @@ class MediaAdapter():
     """
     Designed to be subclassed for a specific media player like VLC
     """
-    def __init__(self):
-        self._media_player_end_handler = None
+    def __init__(self, media_player_end_handler=None):
+        self._media_player_end_handler = media_player_end_handler
 
     def open(self):
         pass
@@ -32,7 +32,7 @@ class MediaAdapter():
     @property
     def is_playing(self):
         """
-        Answeres the question: Is the player playing a file?
+        Answers the question: Is the player playing a media file?
         :return: True or False
         """
         return False
@@ -68,10 +68,10 @@ class MediaAdapter():
 
     @volume.setter
     def volume(self, v):
-        pass
+        return 0
 
     def play(self):
-        pass
+        return 0
 
     def pause(self):
         pass
@@ -98,3 +98,11 @@ class MediaAdapter():
 
     def set_video_window(self, handle):
         pass
+
+    @property
+    def version(self):
+        return "0.0.0.0"
+
+    @property
+    def name(self):
+        return "MediaAdapter"

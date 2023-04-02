@@ -1,6 +1,6 @@
 #
 # vlc_media_adapter.py - a VLC media player
-# © 2023 by Dave Hocker (AtHomeX10@gmail.com)
+# Copyright © 2023 by Dave Hocker (AtHomeX10@gmail.com)
 #
 # License: GPL v3. See LICENSE.md.
 # This work is based on the original work documented below. It was
@@ -18,8 +18,8 @@ class VLCMediaAdapter(MediaAdapter):
     """
     Designed to be subclassed for a specific media player like VLC
     """
-    def __init__(self):
-        super.__init__()
+    def __init__(self, media_player_end_handler=None):
+        super().__init__(media_player_end_handler=media_player_end_handler)
 
         self._vlc_instance = vlc.Instance()
         self._player = self._vlc_instance.media_player_new()
@@ -87,18 +87,19 @@ class VLCMediaAdapter(MediaAdapter):
         self._player.audio_set_volume(v)
 
     def play(self):
-        self._player.play()
+        return self._player.play()
 
     def pause(self):
-        self._player.pause()
+        return self._player.pause()
 
     def stop(self):
-        self._player.stop()
+        return self._player.stop()
 
-    def _on_media_player_end(self):
+    def _on_media_player_end(self, event):
         """
         Handle end of song/track from underlying media player. There is
         no gurantee that this is on the same thread as the UI.
+        :param event: Not used, but required for VLC
         :return:
         """
         # Callback to handler
@@ -121,10 +122,25 @@ class VLCMediaAdapter(MediaAdapter):
         :return:
         """
         # set the window id where to render VLC's video output
-        handle = self._playlist_panel.GetHandle()
         if sys.platform.startswith('linux'):  # for Linux using the X Server
             self._player.set_xwindow(handle)
         elif sys.platform == "win32":  # for Windows
             self._player.set_hwnd(handle)
         elif sys.platform == "darwin":  # for macOS
             self._player.set_nsobject(handle)
+
+    @property
+    def version(self):
+        """
+        Return the underlying libVLC version
+        :return:
+        """
+        return vlc.__libvlc_version__
+
+    @property
+    def name(self):
+        """
+        Return the human-readable name of the underlying adapter
+        :return:
+        """
+        return "libVLC"
