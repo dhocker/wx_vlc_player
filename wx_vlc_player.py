@@ -192,7 +192,7 @@ class Player(wx.Frame):
         self._next_button = wx.Button(self._transport_panel, label=">>", style=wx.BU_EXACTFIT)
         self._next_button.Disable()
         self._random_button = wx.ToggleButton(self._transport_panel, label="Random")
-        self._mute_button = wx.Button(self._transport_panel, label="Mute", style=wx.BU_EXACTFIT)
+        self._mute_button = wx.Button(self._transport_panel, label="Mute", size=(70, 20))
         self._volume_slider = wx.Slider(self._transport_panel, -1, 0, 0, 100, size=(100, -1))
         self._volume_slider.SetValue(self._current_volume)
 
