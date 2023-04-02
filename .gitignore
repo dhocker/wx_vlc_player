@@ -1,0 +1,10 @@
+__pycache__
+*.log
+*.mp3
+wx_vlc_player.conf
+build/
+dist/
+Thumbs.db
+.idea/
+.DS_Store
+.vscode/
