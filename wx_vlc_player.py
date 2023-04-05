@@ -44,6 +44,8 @@ import wx.lib.newevent
 from vlc_media_adapter import VLCMediaAdapter
 from configuration import Configuration
 import version
+from playlist_panel import PlaylistPanel
+from song_utils import create_song_list, format_time
 
 # import standard libraries
 from os.path import basename, expanduser, isfile, join as joined
@@ -76,6 +78,7 @@ class Player(wx.Frame):
         self._playlist_files = []
         self._current_playlist_name = ""
         self._current_volume = self._config[Configuration.CFG_VOLUME]
+        self.SetDoubleBuffered(True)
 
         # A large font
         self._large_bold_font = wx.Font(16,
@@ -151,33 +154,18 @@ class Player(wx.Frame):
 
     def _create_playlist(self):
         # The first panel holds the playlist
-        self._playlist_panel = wx.Panel(self, -1)
-
-        # Currently playing song and its playlist
-        self._current_song_label = wx.StaticText(self._playlist_panel,
-                                                 label="N/A",
-                                                 style=wx.ALIGN_CENTER | wx.ST_NO_AUTORESIZE)
-
-        # List of songs
-        # https://docs.wxpython.org/wx.ListBox.html
-        self._playlist = wx.ListBox(self._playlist_panel, choices=[],
-                                    style=wx.LB_SINGLE | wx.LB_ALWAYS_SB | wx.LB_OWNERDRAW)
-        # Playlist ListBox events
-        self.Bind(wx.EVT_LISTBOX, self._on_playlist_dbl_click)
-        self.Bind(wx.EVT_LISTBOX_DCLICK, self._on_playlist_dbl_click)
-
-        # Playlist into panel
-        playbox = wx.BoxSizer(wx.VERTICAL)
-        playbox.Add(self._current_song_label, 0, flag=wx.EXPAND | wx.TOP | wx.BOTTOM, border=5)
-        playbox.Add(self._playlist, 2, flag=wx.EXPAND, border=15)
-        self._playlist_panel.SetSizer(playbox)
+        self._playlist_panel = PlaylistPanel(self,
+                                             item_activated_handler=self._on_playlist_dbl_click,
+                                             item_selected_handler=self._on_playlist_single_click)
 
         # Handle keyboard events, treat space bar as play/pause
-        self._playlist_panel.Bind(wx.EVT_CHAR, self._on_keyboard_char)
+        # self._playlist_panel.Bind(wx.EVT_CHAR, self._on_keyboard_char)
 
     def _create_transport(self):
         self._transport_panel = wx.Panel(self, -1)
+        self._transport_panel.SetDoubleBuffered(True)
         self._time_slider = wx.Slider(self._transport_panel, -1, 0, 0, 1000)
+        self._time_slider.SetDoubleBuffered(True)
         self._time_slider.SetRange(0, 1)
         self._transport_now_playing=wx.StaticText(self._transport_panel,
                                                   label="N/A",
@@ -249,7 +237,7 @@ class Player(wx.Frame):
 
         # Put everything together
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self._playlist_panel, 1, flag=wx.EXPAND)
+        sizer.Add(self._playlist_panel, 1, flag=wx.EXPAND | wx.LEFT | wx.RIGHT, border=10)
         sizer.Add(self._transport_panel, flag=wx.EXPAND | wx.BOTTOM | wx.TOP, border=10)
         self.SetSizer(sizer)
 
@@ -284,7 +272,7 @@ class Player(wx.Frame):
         :param label:
         :return:
         """
-        self._current_song_label.SetLabelText(f"{label}")
+        self._playlist_panel.set_current_playlist_label(f"{label}")
 
     def _set_current_song_label(self, label):
         """
@@ -342,8 +330,7 @@ class Player(wx.Frame):
 
         fh = open(file_name, "r")
         rec = fh.readline()
-        songs = []
-        song_names = []
+        song_files = []
         while rec:
             if not rec.startswith("#"):
                 rec = rec.replace("\n", "")
@@ -356,24 +343,25 @@ class Player(wx.Frame):
                 ext = os.path.splitext(rec)
                 # Supported file types
                 if ext[1] in [".mp3", ".wav", ".aac", ".mp4", ".mkv"]:
-                    songs.append(rec)
-                    song_names.append(basename(rec))
+                    song_files.append(rec)
             rec = fh.readline()
 
-        self._playlist_files = songs
-        self._playlist.InsertItems(song_names, 0)
+        # File list with info
+        song_list = create_song_list(song_files)
+        self._playlist_files = song_list
+        self._playlist_panel.load_playlist(song_list)
         self._now_playing_item = 0
 
         # Queue the first file
         self._adapter.queue_media_file(None)
-        self._playlist_items = len(songs)
+        self._playlist_items = len(song_list)
         self._now_playing_item = -1
 
         # Report the title of the playlist chosen
         self._current_playlist_name = basename(file_name)
 
         # By default, queue the first song
-        if len(songs) > 0:
+        if self._playlist_items > 0:
             self._queue_file_for_play(0)
 
     def _queue_file_for_play(self, item):
@@ -382,7 +370,7 @@ class Player(wx.Frame):
         :param item: Playlist index number to queue, 0-n
         :return:
         """
-        file_name = self._playlist_files[item]
+        file_name = self._playlist_files[item]["file_path"]
         if os.path.exists(file_name):
             self._now_playing_file_name = file_name
             self._adapter.queue_media_file(file_name)
@@ -397,9 +385,13 @@ class Player(wx.Frame):
             self._adapter.volume = self._current_volume
             self._volume_slider.SetValue(self._current_volume)
 
+            # Set the ranges of the time slider
+            song_length = self._playlist_files[item]["time"]
+            self._time_slider.SetRange(0, song_length)
+
             self._now_playing_item = item
             # self._playlist.SetItemBackgroundColour(item, "#800080")
-            self._playlist.SetSelection(self._now_playing_item)
+            self._playlist_panel.selection = self._now_playing_item
 
             self._play_button.Enable()
             self._stop_button.Disable()
@@ -419,9 +411,7 @@ class Player(wx.Frame):
         if self._is_playing():
             self._on_stop_clicked(None)
 
-        item_count = self._playlist.GetCount()
-        for i in range(item_count):
-            self._playlist.Delete(0)
+        self._playlist_panel.clear_playlist()
 
         self._now_playing_file_name = None
         self._current_playlist_name = "..."
@@ -442,8 +432,11 @@ class Player(wx.Frame):
             if self._playlist_items > 0:
                 self._on_play_clicked(None)
 
-    def _on_playlist_dbl_click(self, evt):
-        item = self._playlist.GetSelection()
+    def _on_playlist_single_click(self, item):
+        if not self._is_playing():
+            self._queue_file_for_play(item)
+
+    def _on_playlist_dbl_click(self, item):
         self._queue_file_for_play(item)
         self._on_play_clicked(None)
 
@@ -522,24 +515,13 @@ class Player(wx.Frame):
         """Update the time slider according to the current movie time.
         """
         if self._is_playing():
-            # since the self.player.get_length can change while playing,
-            # re-set the timeslider to the correct range.
-            # NOTE that player time is in milliseconds. Hence, the adjustment here.
-            song_length = int(self._adapter.media_length)
-            self._time_slider.SetRange(0, song_length)
-
             # update the time on the slider
             song_time = int(self._adapter.media_time)
             self._time_slider.SetValue(song_time)
 
             # Update song position in normal time format
-            position = f"{Player._format_time(song_time)} / {Player._format_time(song_length)}"
+            position = f"{format_time(song_time)} / {format_time(self._playlist_files[self._now_playing_item]['time'])}"
             self._current_song_position.SetLabelText(position)
-
-    @staticmethod
-    def _format_time(t):
-        result = f"{int(t / 60):0d}:{int(t % 60):02d}"
-        return result
 
     def _on_time_slider_change(self, cmd_evt):
         self._adapter.media_time = self._time_slider.GetValue()

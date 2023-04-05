@@ -7,3 +7,4 @@ py2app==0.28.5
 python-vlc==3.0.18121
 six==1.16.0
 wxPython==4.2.0
+mutagen
