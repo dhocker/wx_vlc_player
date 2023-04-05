@@ -10,7 +10,19 @@ https://bitbucket.org/ronaldoussoren/py2app/issues/219/new-mach-o-header-is-too-
 from setuptools import setup
 
 APP = ['wx_vlc_player.py']
-DATA_FILES = ["resources/wx_vlc_player.gif"]
+DATA_FILES = [
+    ("images", [
+        "resources/wx_vlc_player.gif",
+        "resources/next-track.png",
+        "resources/pause.png",
+        "resources/play-solid.png",
+        "resources/previous-track.png",
+        "resources/stop.png",
+        "resources/muted.png",
+        "resources/unmuted.png",
+        "resources/random.png"
+    ])
+]
 OPTIONS = {
     "iconfile": "resources/wx_vlc_player.icns",
     "packages": ["PIL"]

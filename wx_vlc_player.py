@@ -64,6 +64,7 @@ class Player(wx.Frame):
         :param title:
         :param video:
         """
+        self._once = False
         self._config = Configuration.get_configuration()
         fr = self._config[Configuration.CFG_RECT]
 
@@ -171,16 +172,24 @@ class Player(wx.Frame):
                                                   label="N/A",
                                                   style=wx.ALIGN_CENTER | wx.ST_NO_AUTORESIZE)
         self._transport_now_playing.SetFont(self._large_bold_font)
-        self._previous_button = wx.Button(self._transport_panel, label="<<", style=wx.BU_EXACTFIT)
+        self._previous_button = wx.BitmapButton(self._transport_panel, -1, self._load_bitmap("previous-track.png"))
         self._previous_button.Disable()
-        self._play_button = wx.Button(self._transport_panel, label="Play", size=(50, 20))
+        self._previous_button.SetToolTip("Play previous song")
+        self._play_button = wx.BitmapButton(self._transport_panel, -1, self._load_bitmap("play-solid.png"))
         self._play_button.Disable()
-        self._stop_button = wx.Button(self._transport_panel, label="Stop", size=(50, 20))
+        self._play_button.SetToolTip("Play/pause current song")
+        self._stop_button = wx.BitmapButton(self._transport_panel, -1, self._load_bitmap("stop.png"))
         self._stop_button.Disable()
-        self._next_button = wx.Button(self._transport_panel, label=">>", style=wx.BU_EXACTFIT)
+        self._stop_button.SetToolTip("Stop playing")
+        self._next_button = wx.BitmapButton(self._transport_panel, -1, self._load_bitmap("next-track.png"))
         self._next_button.Disable()
-        self._random_button = wx.ToggleButton(self._transport_panel, label="Random")
-        self._mute_button = wx.Button(self._transport_panel, label="Mute", size=(70, 20))
+        self._next_button.SetToolTip("Play next song")
+        self._random_button = wx.BitmapToggleButton(self._transport_panel,
+                                                    size=(40,40),
+                                                    label=self._load_bitmap("random.png"))
+        self._random_button.SetToolTip("Play randomly")
+        self._mute_button = wx.BitmapButton(self._transport_panel, -1, self._load_bitmap("unmuted.png"))
+        self._mute_button.SetToolTip("Mute/unmute sound")
         self._volume_slider = wx.Slider(self._transport_panel, -1, 0, 0, 100, size=(100, -1))
         self._volume_slider.SetValue(self._current_volume)
 
@@ -455,7 +464,7 @@ class Player(wx.Frame):
         # Play to Pause
         self._adapter.pause()
         self._timer.Stop()
-        self._play_button.SetLabel("Play")
+        self._play_button.SetBitmapLabel(self._load_bitmap("play-solid.png"))
 
     def _pause_to_play(self):
         # Pause/Stop to Play
@@ -469,7 +478,7 @@ class Player(wx.Frame):
                 self._show_error_dlg("Unable to play.")
                 return
             self._timer.Start(1000)  # XXX millisecs
-            self._play_button.SetLabel("Pause")
+            self._play_button.SetBitmapLabel(self._load_bitmap("pause.png"))
             self._stop_button.Enable()
 
     def _is_playing(self):
@@ -486,7 +495,7 @@ class Player(wx.Frame):
         # reset the time slider
         self._time_slider.SetValue(0)
         self._timer.Stop()
-        self._play_button.SetLabel("Play")
+        self._play_button.SetBitmapLabel(self._load_bitmap("play-solid.png"))
         self._stop_button.Disable()
 
     def _on_previous_clicked(self, event):
@@ -497,7 +506,11 @@ class Player(wx.Frame):
         """
         if self._now_playing_item > 0:
             self._on_stop_clicked(None)
-            self._queue_file_for_play(self._now_playing_item - 1)
+            if self._random_button.GetValue():
+                next_item = random.randrange(self._playlist_items)
+            else:
+                next_item = self._now_playing_item - 1
+            self._queue_file_for_play(next_item)
             self._on_play_clicked(None)
 
     def _on_next_clicked(self, event):
@@ -506,9 +519,16 @@ class Player(wx.Frame):
         :param event: Ignored
         :return:
         """
-        if (self._now_playing_item + 1) < self._playlist_items:
+        if self._now_playing_item > 0:
             self._on_stop_clicked(None)
-            self._queue_file_for_play(self._now_playing_item + 1)
+            if self._random_button.GetValue():
+                next_item = random.randrange(self._playlist_items)
+            else:
+                if (self._now_playing_item + 1) < self._playlist_items:
+                    next_item = self._now_playing_item + 1
+                else:
+                    return
+            self._queue_file_for_play(next_item)
             self._on_play_clicked(None)
 
     def _on_timer_tick(self, evt):
@@ -538,11 +558,11 @@ class Player(wx.Frame):
         if volume == 0:
             self._adapter.volume = self._current_volume
             self._volume_slider.SetValue(self._current_volume)
-            self._mute_button.SetLabel("Mute")
+            self._mute_button.SetBitmapLabel(self._load_bitmap("unmuted.png"))
         else:
             self._adapter.volume = 0
             self._volume_slider.SetValue(0)
-            self._mute_button.SetLabel("Unmute")
+            self._mute_button.SetBitmapLabel(self._load_bitmap("muted.png"))
 
     def _on_volume_slider_change(self, evt):
         """Set the volume according to the volume sider.
@@ -588,6 +608,24 @@ class Player(wx.Frame):
         error_dlg = wx.MessageDialog(self, errormessage, 'Error', wx.OK|
                                                                 wx.ICON_ERROR)
         error_dlg.ShowModal()
+
+    def _load_bitmap(self, bitmap_name):
+        """
+        Load a bitmap file. When running under macOX bitmaps are in the
+        images folder. Under the IDE images are in the resources folder.
+        :param bitmap_name: Name of bitmap file to load.
+        :return:
+        """
+        # Debugging code
+        # if not self._once:
+        #     self._once = True
+        #     dlg = wx.MessageDialog(self, os.getcwd(), "Where are we?", wx.OK | wx.ICON_INFORMATION)
+        #     dlg.ShowModal()
+
+        bitmap_file = os.path.join("images", bitmap_name)
+        if os.path.exists(bitmap_file):
+            return wx.Bitmap(bitmap_file)
+        return wx.Bitmap(os.path.join("resources", bitmap_name))
 
 
 if __name__ == "__main__":
