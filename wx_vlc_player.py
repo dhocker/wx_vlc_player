@@ -215,8 +215,8 @@ class Player(wx.Frame):
         box2 = wx.BoxSizer(wx.HORIZONTAL)
         box3 = wx.BoxSizer(wx.HORIZONTAL)
         # box1 contains the timeslider
-        box1.Add(self._time_slider, 1, flag=wx.LEFT | wx.RIGHT, border=20)
-        box2.Add(self._transport_now_playing, 1, flag=wx.LEFT | wx.RIGHT, border=20)
+        box1.Add(self._time_slider, 1, flag=wx.ALL, border=10)
+        box2.Add(self._transport_now_playing, 1, flag=wx.ALL, border=10)
         # box2 contains some buttons and the volume controls
         box3.Add(self._previous_button, flag=wx.LEFT, border=15)
         box3.Add(self._play_button, flag=wx.LEFT, border=15)
@@ -229,9 +229,9 @@ class Player(wx.Frame):
         box3.Add(self._mute_button, flag=wx.RIGHT, border=10)
         box3.Add(self._volume_slider, flag=wx.LEFT | wx.RIGHT, border=5)
         # Merge box1 and box2 to the ctrlsizer
-        ctrlbox.Add(box1, 1, flag=wx.EXPAND | wx.BOTTOM, border=10)
-        ctrlbox.Add(box2, 1, flag=wx.EXPAND | wx.BOTTOM, border=5)
-        ctrlbox.Add(box3, 1, flag=wx.EXPAND | wx.BOTTOM, border=5)
+        ctrlbox.Add(box1, 1, flag=wx.EXPAND | wx.ALL, border=0)
+        ctrlbox.Add(box2, 1, flag=wx.EXPAND | wx.ALL, border=0)
+        ctrlbox.Add(box3, 1, flag=wx.EXPAND | wx.ALL, border=0)
         self._transport_panel.SetSizer(ctrlbox)
 
     def _create_widgets(self):
