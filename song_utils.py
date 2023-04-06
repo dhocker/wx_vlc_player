@@ -12,15 +12,18 @@ import os
 from mutagen.mp3 import MP3
 
 
-def create_song_list(songs):
+def create_song_list(songs, progress_dlg=None):
     """
     Create a song list with song info
     :param songs: A list of song paths
+    :param progress_dlg: A progress dialog to be updated with progress
     :return: A list of songs with details
     """
     # File by file extension.This only works for mp3 files.
     song_list = []
     for file_path in songs:
+        if progress_dlg is not None:
+            progress_dlg.Pulse(os.path.basename(file_path))
         name = "N/A"
         album = "N/A"
         artist = "N/A"

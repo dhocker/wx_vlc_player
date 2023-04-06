@@ -107,6 +107,17 @@ class Player(wx.Frame):
         # Set up the random number generator
         random.seed()
 
+        # Create the startup event to run after the UI is active
+        self._start_up_event, EVT_START_UP = wx.lib.newevent.NewEvent()
+        self.Bind(EVT_START_UP, self._on_start_up)
+        wx_evt = self._start_up_event()
+        wx.PostEvent(self, wx_evt)
+
+    def _on_start_up(self, event):
+        """
+        Executes AFTER the UI is active
+        :return:
+        """
         # Load the last playlist
         playlist = self._config[Configuration.CFG_PLAYLIST]
         if playlist != "":
@@ -341,6 +352,9 @@ class Player(wx.Frame):
         """
         self._clear_playlist()
 
+        # Loading a playlist can take some time
+        dlg = wx.GenericProgressDialog(f"Loading Playlist {basename(file_name)}", "", parent=self)
+
         fh = open(file_name, "r")
         rec = fh.readline()
         song_files = []
@@ -357,10 +371,12 @@ class Player(wx.Frame):
                 # Supported file types
                 if ext[1] in [".mp3", ".wav", ".aac", ".mp4", ".mkv"]:
                     song_files.append(rec)
+                    dlg.Pulse(basename(rec))
             rec = fh.readline()
 
         # File list with info
-        song_list = create_song_list(song_files)
+        dlg.Pulse("Reading file tags...")
+        song_list = create_song_list(song_files, progress_dlg=dlg)
         self._playlist_files = song_list
         self._playlist_panel.load_playlist(song_list)
         self._now_playing_item = 0
@@ -372,6 +388,9 @@ class Player(wx.Frame):
 
         # Report the title of the playlist chosen
         self._current_playlist_name = basename(file_name)
+
+        # End the progress dialog
+        dlg.Destroy()
 
         # By default, queue the first song
         if self._playlist_items > 0:
