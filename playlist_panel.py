@@ -26,6 +26,7 @@ class PlaylistPanel(wx.Panel):
 
         self.SetDoubleBuffered(True)
         self._selected_item = 0
+        self._song_list = []
 
         # Currently playing song and its playlist
         self._current_playlist_label = wx.StaticText(self,
@@ -60,6 +61,7 @@ class PlaylistPanel(wx.Panel):
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self._on_item_selected)
         self._item_activated_handler = item_activated_handler
         self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self._on_item_activated)
+        self.Bind(wx.EVT_LIST_ITEM_RIGHT_CLICK, self._on_right_click)
 
         # Playlist into panel
         playbox = wx.BoxSizer(wx.VERTICAL)
@@ -88,6 +90,8 @@ class PlaylistPanel(wx.Panel):
             self._playlist.SetItem(index, PlaylistPanel.ALBUM_COL, s["album"])
             self._playlist.SetItem(index, PlaylistPanel.ARTIST_COL, s["artist"])
             self._playlist.SetItem(index, PlaylistPanel.TIME_COL, format_time(s["time"]))
+            # Build a shadow list of songs (their paths)
+            self._song_list.append(s["file_path"])
             idx += 1
 
     def _on_item_selected(self, event):
@@ -112,6 +116,20 @@ class PlaylistPanel(wx.Panel):
 
     def _on_keyboard_char(self, event):
         pass
+
+    def _on_right_click(self, event):
+        """
+        The user right-clicked a row
+        :param event: Identifies the row
+        :return: None
+        """
+        dlg = wx.MessageDialog(self,
+                               event.Text,
+                               'Song/Track Information',
+                               wx.OK | wx.ICON_INFORMATION | wx.CENTRE)
+        dlg.SetExtendedMessage(self._song_list[event.Index])
+        dlg.ShowModal()
+        dlg.Destroy()
 
     @property
     def item_count(self):
