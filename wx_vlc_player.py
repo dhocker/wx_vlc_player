@@ -168,10 +168,12 @@ class Player(wx.Frame):
         self._time_slider = wx.Slider(self._transport_panel, -1, 0, 0, 1000)
         self._time_slider.SetDoubleBuffered(True)
         self._time_slider.SetRange(0, 1)
+        self._time_slider.SetToolTip("Current song position")
         self._transport_now_playing=wx.StaticText(self._transport_panel,
                                                   label="N/A",
                                                   style=wx.ALIGN_CENTER | wx.ST_NO_AUTORESIZE)
         self._transport_now_playing.SetFont(self._large_bold_font)
+        self._transport_now_playing.SetToolTip("Currently selected song")
         self._previous_button = wx.BitmapButton(self._transport_panel, -1, self._load_bitmap("previous-track.png"))
         self._previous_button.Disable()
         self._previous_button.SetToolTip("Play previous song")
@@ -191,6 +193,7 @@ class Player(wx.Frame):
         self._mute_button = wx.BitmapButton(self._transport_panel, -1, self._load_bitmap("unmuted.png"))
         self._mute_button.SetToolTip("Mute/unmute sound")
         self._volume_slider = wx.Slider(self._transport_panel, -1, 0, 0, 100, size=(100, -1))
+        self._volume_slider.SetToolTip("Volume level")
         self._volume_slider.SetValue(self._current_volume)
 
         # Song position
@@ -198,6 +201,7 @@ class Player(wx.Frame):
                                                     label="00:00 / 00:00",
                                                     style=wx.ALIGN_CENTER)
         self._current_song_position.SetFont(self._large_bold_font)
+        self._current_song_position.SetToolTip("Current position time")
 
         # Bind controls to events
         self.Bind(wx.EVT_BUTTON, self._on_play_clicked, self._play_button)
