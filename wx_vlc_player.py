@@ -201,6 +201,7 @@ class Player(wx.Frame):
                                                     size=(40,40),
                                                     label=self._load_bitmap("random.png"))
         self._random_button.SetToolTip("Play randomly")
+        self._random_button.SetValue(Configuration.to_bool(self._config[Configuration.CFG_RANDOM_PLAY]))
         self._mute_button = wx.BitmapButton(self._transport_panel, -1, self._load_bitmap("unmuted.png"))
         self._mute_button.SetToolTip("Mute/unmute sound")
         self._volume_slider = wx.Slider(self._transport_panel, -1, 0, 0, 100, size=(100, -1))
@@ -374,7 +375,7 @@ class Player(wx.Frame):
                     dlg.Pulse(basename(rec))
             rec = fh.readline()
 
-        # File list with info
+        # File list with info   `
         dlg.Pulse("Reading file tags...")
         song_list = create_song_list(song_files, progress_dlg=dlg)
         self._playlist_files = song_list
@@ -392,9 +393,12 @@ class Player(wx.Frame):
         # End the progress dialog
         dlg.Destroy()
 
-        # By default, queue the first song
+        # queue the first song to be played
         if self._playlist_items > 0:
-            self._queue_file_for_play(0)
+            if self._random_button.GetValue():
+                self._queue_file_for_play(random.randrange(self._playlist_items))
+            else:
+                self._queue_file_for_play(0)
 
     def _queue_file_for_play(self, item):
         """
@@ -570,8 +574,8 @@ class Player(wx.Frame):
         self._adapter.media_time = self._time_slider.GetValue()
 
     def _on_random_changed(self, event):
-        # The random button changed. Not currently used.
-        pass
+        # The random button changed.
+        self._config[Configuration.CFG_RANDOM_PLAY] = Configuration.to_bool_string(self._random_button.GetValue())
 
     def _on_mute_clicked(self, evt):
         """Toggle Mute/Unmute according to the audio button.

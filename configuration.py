@@ -28,6 +28,7 @@ class Configuration():
         "playlist": "",
         "volume": 50,
         "rect": {"x": -1, "y": -1, "width": 550, "height": 500},
+        "random-play": "False",
     }
 
     # Keys
@@ -35,6 +36,11 @@ class Configuration():
     CFG_PLAYLIST = "playlist"
     CFG_VOLUME = "volume"  # last volume setting
     CFG_RECT = "rect"  # position and size of app window
+    CFG_RANDOM_PLAY = "random-play"
+
+    # Values
+    CFG_TRUE = "True"
+    CFG_FALSE = "False"
 
     def __init__(self):
         Configuration.load_configuration()
@@ -113,3 +119,22 @@ class Configuration():
             except Exception as ex:
                 raise ex
         return file_name
+
+    @staticmethod
+    def to_bool(s) -> bool:
+        """
+        Converts a configuration boolean string into a bool
+        :param s:
+        :return:
+        """
+        sl = s.lower()
+        return sl in ["true", "yes"]
+
+    @staticmethod
+    def to_bool_string(b) -> str:
+        """
+        Convert a bool into a configuration file string
+        :param b:
+        :return:
+        """
+        return Configuration.CFG_TRUE if b else Configuration.CFG_FALSE
