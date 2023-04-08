@@ -2,9 +2,11 @@
 # playlist_panel.py - the playlist implemented inside a panel
 # Copyright © 2023 by Dave Hocker (AtHomeX10@gmail.com)
 #
-# License: GPL v3. See LICENSE.md.
-# This work is based on the original work documented below. It was
-# intended for playing .mp3 files.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3 of the License.
+#
+# See the LICENSE.md file for more details.
 #
 
 
