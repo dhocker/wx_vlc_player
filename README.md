@@ -1,5 +1,6 @@
-# ![wxVLCPlayer Logo](resources/wx_vlc_player.gif) wxVLCPlayer = Python + wxPython + python-vlc
-© 2023 by Dave Hocker
+# ![wxVLCPlayer Logo](resources/wx_vlc_player.gif) wxVLCPlayer<p><b>Python + wxPython + python-vlc</b></p>
+
+**© 2023 by Dave Hocker (athomex10@gmail.com)**
 
 ## Contents
 * [Overview](#overview)
@@ -9,7 +10,7 @@
 
 ## Overview <a id="overview"></a>
 wxVLCPlayer is a simple media player based on Python, [wxPython](https://www.wxpython.org/) 
-and [libVLC](https://www.videolan.org/vlc/libvlc.html). 
+and [libVLC via python-vlc](https://www.videolan.org/vlc/libvlc.html). 
 It was originally intended to be a simple MP3 player for macOS, but it can play most media supported by libVLC (including video files like .mp4).
 
 ## License
@@ -27,7 +28,7 @@ through the gatekeeper hurdles to get it to run.
 
 ### From Source
 #### Requirements
-You can use a virtual environment (hightly recommended) or you can install the 
+You can use a virtual environment (highly recommended) or you can install the 
 requirements to the system Python 3. Virtual environments is out of the scope of
 this discussion, but you can find out more from the [references](#references).
 
