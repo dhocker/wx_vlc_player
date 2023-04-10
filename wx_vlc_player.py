@@ -255,7 +255,7 @@ class Player(wx.Frame):
         :return:
         """
         # if a file is already running, then stop it.
-        self._on_stop_clicked(None)
+        self._on_stop_clicked()
         self._transport_panel.enable_play_button(False)
         self._transport_panel.enable_stop_button(False)
         self._transport_panel.enable_next_button(False)
