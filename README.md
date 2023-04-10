@@ -21,7 +21,9 @@ See the LICENSE.md file for the full text of the license.
 ## Running the App <a id="running-the-app"></a>
 ### As a macOS App
 The current version of wxVLCPlayer.app can be found in the releases section (as a zip file). Download
-the zip file for your machine's architecture, unzip it and run the wxVLCPlayer.app file. You will have to go through the gatekeeper hurdles to get it to run.
+the zip file for your machine's architecture, unzip it and move wxVLCPlayer.app to the 
+/Users/your-user-name/Applications folder. Then, run the wxVLCPlayer.app. You will have to go 
+through the gatekeeper hurdles to get it to run.
 
 ### From Source
 #### Requirements
