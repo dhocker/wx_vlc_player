@@ -1,4 +1,4 @@
-# ![wxVLCPlayer Logo](resources/wx_vlc_player.gif) wxVLCPlayer - a simple media player
+# ![wxVLCPlayer Logo](resources/wx_vlc_player.gif) wxVLCPlayer = Python + wxPython + python-vlc
 © 2023 by Dave Hocker
 
 ## Contents
@@ -7,16 +7,21 @@
 * [User Interface](#user-interface)
 * [References](#references)
 
-## Overview
+## Overview <a id="overview"></a>
+wxVLCPlayer is a simple media player based on Python, [wxPython](https://www.wxpython.org/) 
+and [libVLC](https://www.videolan.org/vlc/libvlc.html). 
+It was originally intended to be a simple MP3 player for macOS, but it can play most media supported by libVLC (including video files like .mp4).
 
 ## License
 
-This app is licensed under the GNU General Public License v3 as published 
+This project is licensed under the GNU General Public License v3 as published 
 by the Free Software Foundation, Inc..
 See the LICENSE.md file for the full text of the license.
 
-## Running the App
-### macOS X
+## Running the App <a id="running-the-app"></a>
+### As a macOS App
+The current version of wxVLCPlayer.app can be found in the releases section (as a zip file). Download
+the zip file for your machine's architecture, unzip it and run the wxVLCPlayer.app file. You will have to go through the gatekeeper hurdles to get it to run.
 
 ### From Source
 #### Requirements
@@ -24,46 +29,42 @@ You can use a virtual environment (hightly recommended) or you can install the
 requirements to the system Python 3. Virtual environments is out of the scope of
 this discussion, but you can find out more from the [references](#references).
 
-    cd wx_vlc_player
-    pip install -r requirements.txt
+```
+cd wx_vlc_player
+pip install -r requirements.txt
+```
 
 Using this technique, you can run the app from its source directory.
 
-    cd wx_vlc_player
-    python3 wx_vlc_player.py
+```
+cd wx_vlc_player
+python3 wx_vlc_player.py
+```
+    
+Or, you can build wxVLCPlayer.app by running the build_app.sh script file.
 
-## User Interface
+```
+cd wx_vlc_player
+./build_app.sh
+```
 
-![ID3Tag Logo](resources/pyid3tag-screenshot.png)
+## User Interface <a id="user-interface"></a>
+The user interface is based on a playlist and player transport. A playlist is a standard .m3u file created with a text editor or another app like VLC. You can create a playlist with a text editor by simply adding
+lines where each line is the full path to a media file.
 
-### Panes
-The application features two panes: the file list tree and the tags list. 
-* Use the File/Open directory menu item to select a directory into the file list 
-tree.
-* Use the File/Edit file menu item to load the ID3 tags of a file into the tags list pane. 
-Or, simply double click the file. 
-* After editing ID3 tags, use the File/Save file menu item to save the changes.
+For example, an example.m3u might look like this.
 
-### Menu Items
+```
+/Users/username/Music/artist/track1.mp3
+/Users/username/Music/artist/track2.mp3
+/Users/username/Music/artist/track3.mp3
+```
 
-#### File
-* Open directory - Use this item to open a directory in the file list tree.
-* Edit file - Load the selected file's ID3 tags into the tags widget.
-* Save file - Save edited ID3 tags back into its file.
-
-#### Help
-* About pyid3tag - typical about dialog box with license information. Note
-that under macOS this menu item is under the id3tag or python menu item.
-* Application - Opens the README.md file (this file) in the default web browser.
-* Tags - Opens the Tag Help window next to the application window. The Tag Help
-window 
-
-### Tags Widget Buttons
-* Add Tag - Adds a new tag to the set of ID3 tags.
-* Tag combo box - Selects the tag to be added.
-* Tag Help - Opens the Tag Help window next to the application window.
-* Delete Tag - Deletes the currently selected tag (this is the tag containing the cursor).
+Once you have loaded a playlist you can start a track by pressing the play button or double clicking
+on the track.
 
 ## References <a id="references"></a>
+* [wxPython](https://www.wxpython.org/)
+* [libVLC](https://www.videolan.org/vlc/libvlc.html)
 * [virtualenv on pypi](https://virtualenv.pypa.io/en/latest/)
 * [virtualenvwrapper read-the-docs](https://virtualenvwrapper.readthedocs.io/en/latest/)
