@@ -78,6 +78,7 @@ class TransportPanel(wx.Panel):
         self._time_slider.SetDoubleBuffered(True)
         self._time_slider.SetRange(0, 1)
         self._time_slider.SetToolTip("Current song position")
+        self._time_slider.SetCursor(wx.Cursor(wx.CURSOR_HAND))
         self._transport_now_playing=wx.StaticText(self,
                                                   label="N/A",
                                                   style=wx.ALIGN_CENTER | wx.ST_NO_AUTORESIZE)
@@ -105,6 +106,7 @@ class TransportPanel(wx.Panel):
         self._mute_button_state = False
         self._volume_slider = wx.Slider(self, -1, 0, 0, 100, size=(100, -1))
         self._volume_slider.SetToolTip("Volume level")
+        self._volume_slider.SetCursor(wx.Cursor(wx.CURSOR_HAND))
         self._volume_slider.SetValue(self._current_volume)
 
         # Song position
