@@ -10,6 +10,7 @@
 
 
 import sys
+from time import sleep
 from media_adapter import MediaAdapter
 import vlc
 
@@ -52,6 +53,14 @@ class VLCMediaAdapter(MediaAdapter):
         :return: True or False
         """
         return self._player.is_playing()
+
+    @property
+    def media_duration(self):
+        """
+        Returns the media/song/track duration in seconds
+        :return: Duration in seconds
+        """
+        return int(self._media.get_duration() / 1000)
 
     @property
     def media_length(self):

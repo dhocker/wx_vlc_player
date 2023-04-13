@@ -98,6 +98,9 @@ class PlaylistPanel(wx.Panel):
             self._song_list.append(s["file_path"])
             idx += 1
 
+    def set_item_time(self, item, item_time):
+        self._playlist.SetItem(item, PlaylistPanel.TIME_COL, format_time(item_time))
+
     def _on_item_selected(self, event):
         """
         An item was single clicked

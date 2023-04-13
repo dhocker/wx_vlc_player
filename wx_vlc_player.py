@@ -363,6 +363,7 @@ class Player(wx.Frame):
             self._transport_panel.set_time_range(0, song_length)
 
             self._now_playing_item = item
+            self._last_song_length = 0
             # self._playlist.SetItemBackgroundColour(item, "#800080")
             self._playlist_panel.selection = self._now_playing_item
 
@@ -510,12 +511,20 @@ class Player(wx.Frame):
         """
         if self._is_playing():
             # update the time on the slider
-            song_time = int(self._adapter.media_time)
+            song_time = self._adapter.media_time
+            # Handle case where the actual track length exceeds estimated track length
+            song_length = max(self._playlist_files[self._now_playing_item]['time'],
+                              int(self._adapter.media_time))
             self._transport_panel.set_current_time(song_time)
 
             # Update song position in normal time format
             self._transport_panel.set_current_song_position(format_time(song_time),
-                                                            format_time(self._playlist_files[self._now_playing_item]['time']))
+                                                            format_time(song_length))
+
+            # Update playlist panel
+            if self._last_song_length != song_length:
+                self._playlist_panel.set_item_time(self._now_playing_item, song_length)
+                self._last_song_length = song_length
 
     def _on_time_slider_change(self, new_time):
         self._adapter.media_time = new_time
