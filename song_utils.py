@@ -35,7 +35,13 @@ def create_song_list(songs, progress_dlg=None):
                 name = _get_tag(mp3, "TIT2", default_value=os.path.basename(file_path))
                 album = _get_tag(mp3, "TALB")
                 artist = _get_tag(mp3, "TPE1")
-                song_time = int(mp3.info.length)
+                # song_time = int(mp3.info.length)
+                song_time = _get_tag(mp3, "TLEN", default_value="")
+                if song_time != "":
+                    # Convert from ms to sec
+                    song_time = int(int(song_time) / 1000)
+                else:
+                    song_time = int(mp3.info.length)
             except Exception as ex:
                 name = file_path
         else:
