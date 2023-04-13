@@ -167,7 +167,8 @@ class Player(wx.Frame):
         # The first panel holds the playlist
         self._playlist_panel = PlaylistPanel(self,
                                              item_activated_handler=self._on_playlist_dbl_click,
-                                             item_selected_handler=self._on_playlist_single_click)
+                                             item_selected_handler=self._on_playlist_single_click,
+                                             item_toggled_handler=self._on_playlist_item_toggled)
 
         # Handle keyboard events, treat space bar as play/pause
         # self._playlist_panel.Bind(wx.EVT_CHAR, self._on_keyboard_char)
@@ -221,7 +222,7 @@ class Player(wx.Frame):
         if self._now_playing_item >= self._playlist_items:
             # No more songs to play
             self._now_playing_item = -1
-            self._on_stop_clicked(None)
+            self._on_stop_clicked()
         else:
             # Start playing the next song
             self._queue_file_for_play(self._now_playing_item)
@@ -410,6 +411,14 @@ class Player(wx.Frame):
 
     def _on_playlist_dbl_click(self, item):
         self._queue_file_for_play(item)
+        self._on_play_clicked()
+
+    def _on_playlist_item_toggled(self, item):
+        """
+        Handle space bar toggle on playlist
+        :param item: The item index number
+        :return: None
+        """
         self._on_play_clicked()
 
     def _on_play_clicked(self):
