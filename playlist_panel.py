@@ -23,7 +23,8 @@ class PlaylistPanel(wx.Panel):
 
     def __init__(self, parent,
                  item_selected_handler=None,
-                 item_activated_handler=None):
+                 item_activated_handler=None,
+                 item_toggled_handler=None):
         super().__init__(parent)
 
         self.SetDoubleBuffered(True)
@@ -72,7 +73,8 @@ class PlaylistPanel(wx.Panel):
         self.SetSizer(playbox)
 
         # Handle keyboard events, treat space bar as play/pause
-        self.Bind(wx.EVT_CHAR, self._on_keyboard_char)
+        self._item_toggled_handler = item_toggled_handler
+        self._playlist.Bind(wx.EVT_CHAR, self._on_keyboard_char)
 
     def clear_playlist(self):
         self._playlist.DeleteAllItems()
@@ -117,7 +119,8 @@ class PlaylistPanel(wx.Panel):
             self._item_activated_handler(self._selected_item)
 
     def _on_keyboard_char(self, event):
-        pass
+        if self._item_toggled_handler is not None:
+            self._item_toggled_handler(self._selected_item)
 
     def _on_right_click(self, event):
         """
