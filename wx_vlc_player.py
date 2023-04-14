@@ -38,7 +38,6 @@ Date: 23-11-2010
 
 import os
 import random
-from urllib.parse import unquote
 import wx  # 2.8 ... 4.0.6
 import wx.lib.newevent
 from vlc_media_adapter import VLCMediaAdapter
@@ -46,7 +45,8 @@ from configuration import Configuration
 import version
 from playlist_panel import PlaylistPanel
 from transport_panel import TransportPanel
-from song_utils import create_song_list, format_time
+from playlist_model import PlaylistModel
+from song_utils import format_time
 
 # import standard libraries
 from os.path import basename, join as joined
@@ -71,11 +71,8 @@ class Player(wx.Frame):
                           title=app_title,
                           pos=(fr["x"], fr["y"]),
                           size=(fr["width"], fr["height"]))
-        self._now_playing_file_name = None
         self._now_playing_item = -1
-        self._playlist_items = 0
-        self._playlist_files = []
-        self._current_playlist_name = ""
+        self._playlist_model = PlaylistModel()
         self._current_volume = self._config[Configuration.CFG_VOLUME]
         self._random_play = Configuration.to_bool(self._config[Configuration.CFG_RANDOM_PLAY])
         self.SetDoubleBuffered(True)
@@ -215,11 +212,11 @@ class Player(wx.Frame):
         # If random is on, choose a new item by random number
         if self._random_play:
             # 0 to (number of items - 1)
-            self._now_playing_item = random.randrange(self._playlist_items)
+            self._now_playing_item = random.randrange(self._playlist_model.playlist_length)
         else:
             self._now_playing_item += 1
 
-        if self._now_playing_item >= self._playlist_items:
+        if self._now_playing_item >= self._playlist_model.playlist_length:
             # No more songs to play
             self._now_playing_item = -1
             self._on_stop_clicked()
@@ -278,9 +275,9 @@ class Player(wx.Frame):
 
         # Load the playlist
         if file_name is not None:
+            self._load_playlist(file_name)
             self._config[Configuration.CFG_PLAYLIST] = file_name
             Configuration.save_configuration()
-            self._load_playlist(file_name)
 
     def _load_playlist(self, file_name):
         """
@@ -293,47 +290,21 @@ class Player(wx.Frame):
         # Loading a playlist can take some time
         dlg = wx.GenericProgressDialog(f"Loading Playlist {basename(file_name)}", "", parent=self)
 
-        fh = open(file_name, "r")
-        rec = fh.readline()
-        song_files = []
-        while rec:
-            if not rec.startswith("#"):
-                rec = rec.replace("\n", "")
-
-                # For VLC created playlists
-                rec = rec.replace("file://", "")
-                # Handle url encoded strings from VLC playlists
-                rec = unquote(rec)
-
-                ext = os.path.splitext(rec)
-                # Supported file types
-                if ext[1] in [".mp3", ".wav", ".aac", ".mp4", ".mkv"]:
-                    song_files.append(rec)
-                    dlg.Pulse(basename(rec))
-            rec = fh.readline()
-
-        # File list with info   `
-        dlg.Pulse("Reading file tags...")
-        song_list = create_song_list(song_files, progress_dlg=dlg)
-        self._playlist_files = song_list
-        self._playlist_panel.load_playlist(song_list)
+        self._playlist_model.load_playlist(file_name)
+        self._playlist_panel.load_playlist(self._playlist_model.playlist_items)
         self._now_playing_item = 0
 
         # Queue the first file
         self._adapter.queue_media_file(None)
-        self._playlist_items = len(song_list)
         self._now_playing_item = -1
-
-        # Report the title of the playlist chosen
-        self._current_playlist_name = basename(file_name)
 
         # End the progress dialog
         dlg.Destroy()
 
         # queue the first song to be played
-        if self._playlist_items > 0:
+        if self._playlist_model.playlist_length > 0:
             if self._random_play:
-                self._queue_file_for_play(random.randrange(self._playlist_items))
+                self._queue_file_for_play(random.randrange(self._playlist_model.playlist_length))
             else:
                 self._queue_file_for_play(0)
 
@@ -343,12 +314,11 @@ class Player(wx.Frame):
         :param item: Playlist index number to queue, 0-n
         :return:
         """
-        file_name = self._playlist_files[item]["file_path"]
+        file_name = self._playlist_model.playlist_items[item]["file_path"]
         if os.path.exists(file_name):
-            self._now_playing_file_name = file_name
             self._adapter.queue_media_file(file_name)
             self._set_current_song_label(basename(file_name))
-            self._set_current_playlist_label(f"{self._current_playlist_name} ({self._playlist_items} items)")
+            self._set_current_playlist_label(f"{self._playlist_model.playlist_name} ({self._playlist_model.playlist_length} items)")
 
             # set the window id where to render video output
             handle = self._playlist_panel.GetHandle()
@@ -359,7 +329,7 @@ class Player(wx.Frame):
             self._transport_panel.set_volume(self._current_volume)
 
             # Set the ranges of the time slider
-            song_length = self._playlist_files[item]["time"]
+            song_length = self._playlist_model.playlist_items[item]["time"]
             self._transport_panel.set_time_range(0, song_length)
 
             self._now_playing_item = item
@@ -383,15 +353,12 @@ class Player(wx.Frame):
         :return:
         """
         if self._is_playing():
-            self._on_stop_clicked(None)
+            self._on_stop_clicked()
 
+        self._playlist_model.clear_playlist()
         self._playlist_panel.clear_playlist()
 
-        self._now_playing_file_name = None
-        self._current_playlist_name = "..."
         self._now_playing_item = -1
-        self._playlist_items = 0
-        self._playlist_files = []
         self._set_current_playlist_label("...")
 
         # Disable the transport controls
@@ -403,8 +370,8 @@ class Player(wx.Frame):
     def _on_keyboard_char(self, event):
         keycode = event.GetUnicodeKey()
         if keycode == wx.WXK_SPACE:
-            if self._playlist_items > 0:
-                self._on_play_clicked(None)
+            if self._playlist_model.playlist_length > 0:
+                self._on_play_clicked()
 
     def _on_playlist_single_click(self, item):
         if not self._is_playing():
@@ -476,13 +443,12 @@ class Player(wx.Frame):
     def _on_previous_clicked(self):
         """
         Play the previous song
-        :param event: Ignored
         :return:
         """
         if self._now_playing_item > 0:
             self._on_stop_clicked()
             if self._random_play:
-                next_item = random.randrange(self._playlist_items)
+                next_item = random.randrange(self._playlist_model.playlist_length)
             else:
                 next_item = self._now_playing_item - 1
             self._queue_file_for_play(next_item)
@@ -491,15 +457,14 @@ class Player(wx.Frame):
     def _on_next_clicked(self):
         """
         PLay the next song
-        :param event: Ignored
         :return:
         """
         if self._now_playing_item > 0:
             self._on_stop_clicked()
             if self._random_play:
-                next_item = random.randrange(self._playlist_items)
+                next_item = random.randrange(self._playlist_model.playlist_length)
             else:
-                if (self._now_playing_item + 1) < self._playlist_items:
+                if (self._now_playing_item + 1) < self._playlist_model.playlist_length:
                     next_item = self._now_playing_item + 1
                 else:
                     return
@@ -513,7 +478,7 @@ class Player(wx.Frame):
             # update the time on the slider
             song_time = self._adapter.media_time
             # Handle case where the actual track length exceeds estimated track length
-            song_length = max(self._playlist_files[self._now_playing_item]['time'],
+            song_length = max(self._playlist_model.playlist_items[self._now_playing_item]['time'],
                               int(self._adapter.media_time))
             self._transport_panel.set_current_time(song_time)
 
