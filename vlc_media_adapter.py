@@ -19,8 +19,11 @@ class VLCMediaAdapter(MediaAdapter):
     """
     Designed to be subclassed for a specific media player like VLC
     """
-    def __init__(self, media_player_end_handler=None):
-        super().__init__(media_player_end_handler=media_player_end_handler)
+    def __init__(self,
+                 media_player_end_handler=None,
+                 media_player_position_changed_handler=None):
+        super().__init__(media_player_end_handler=media_player_end_handler,
+                         media_player_position_changed_handler=media_player_position_changed_handler)
 
         self._vlc_instance = vlc.Instance()
         self._player = self._vlc_instance.media_player_new()
@@ -30,6 +33,8 @@ class VLCMediaAdapter(MediaAdapter):
         self._event_manager = self._player.event_manager()
         # Track/song end
         self._event_manager.event_attach(vlc.EventType.MediaPlayerEndReached, self._on_media_player_end)
+        # Track song position?
+        self._event_manager.event_attach(vlc.EventType.MediaPlayerPositionChanged, self._on_media_player_position_changed)
 
     def open(self):
         pass
@@ -123,6 +128,17 @@ class VLCMediaAdapter(MediaAdapter):
         :return:
         """
         self._media_player_end_handler = handler
+
+    def _on_media_player_position_changed(self, event):
+        """
+        The song position has changed. This event is not on the UI thread.
+        :param event: A VLC Event object
+        :return: None
+        """
+        # Callback to handler
+        # Note that for wx, this event must be turned into a wx UI event.
+        if self._media_player_position_changed_handler is not None:
+            self._media_player_position_changed_handler(event)
 
     def set_video_window(self, handle):
         """

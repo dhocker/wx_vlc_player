@@ -8,12 +8,15 @@
 #
 
 
-class MediaAdapter():
+class MediaAdapter:
     """
     Designed to be subclassed for a specific media player like VLC
     """
-    def __init__(self, media_player_end_handler=None):
+    def __init__(self,
+                 media_player_end_handler=None,
+                 media_player_position_changed_handler=None):
         self._media_player_end_handler = media_player_end_handler
+        self._media_player_position_changed_handler = media_player_position_changed_handler
 
     def open(self):
         pass
@@ -95,6 +98,15 @@ class MediaAdapter():
         :return:
         """
         self._media_player_end_handler = handler
+
+    def _on_media_player_position_changed(self):
+        """
+        Handle song position changed event
+        :return: None
+        """
+        # Callback to handler
+        if self._media_player_position_changed_handler is not None:
+            self._media_player_position_changed_handler()
 
     def set_video_window(self, handle):
         pass

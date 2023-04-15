@@ -58,6 +58,8 @@ app_title = "wxPython VLC Music Player"
 class Player(wx.Frame):
     """The main window has to deal with events.
     """
+    WX_TIMER_INTERVAL = 1000  # 1 second
+
     def __init__(self):
         """
         App constructor
@@ -93,12 +95,15 @@ class Player(wx.Frame):
         self.Bind(wx.EVT_TIMER, self._on_timer_tick, self._timer)
 
         # VLC player controls
-        self._adapter = VLCMediaAdapter(media_player_end_handler=self._on_next_song_event)
+        self._adapter = VLCMediaAdapter(media_player_end_handler=self._on_next_song_event,
+                                        media_player_position_changed_handler=self._on_position_changed_event)
         self._adapter.volume = self._current_volume
 
         # Relayed events from the media adapter to the player frame
         self._song_ended_event, EVT_SONG_ENDED = wx.lib.newevent.NewEvent()
         self.Bind(EVT_SONG_ENDED, self._play_next_song)
+        self._song_position_changed_event, EVT_POSITION_CHANGED = wx.lib.newevent.NewEvent()
+        self.Bind(EVT_POSITION_CHANGED, self._update_song_position)
 
         # Set up the random number generator
         random.seed()
@@ -224,6 +229,29 @@ class Player(wx.Frame):
             # Start playing the next song
             self._queue_file_for_play(self._now_playing_item)
             self._on_play_clicked()
+
+    def _update_song_position(self, event):
+        """
+        Update the time slider and current play time
+        :param event: The wx event object
+        :return:
+        """
+        if self._is_playing():
+            # update the time on the slider
+            song_time = self._adapter.media_time
+            # Handle case where the actual track length exceeds estimated track length
+            song_length = max(self._playlist_model.get_item_key_value(self._now_playing_item, PlaylistModel.PMI_TIME),
+                              int(self._adapter.media_time))
+            self._transport_panel.set_current_time(song_time)
+
+            # Update song position in normal time format
+            self._transport_panel.set_current_song_position(format_time(song_time),
+                                                            format_time(song_length))
+
+            # Update playlist panel
+            if self._last_song_length != song_length:
+                self._playlist_panel.set_item_time(self._now_playing_item, song_length)
+                self._last_song_length = song_length
 
     def _set_current_playlist_label(self, label):
         """
@@ -418,7 +446,7 @@ class Player(wx.Frame):
             if self._adapter.play():  # == -1:
                 self._show_error_dlg("Unable to play.")
                 return
-            self._timer.Start(1000)  # XXX millisecs
+            self._timer.Start(Player.WX_TIMER_INTERVAL)  # XXX millisecs
             # Show the pause icon
             self._transport_panel.set_play_button_icon(False)
             self._transport_panel.enable_stop_button(True)
@@ -472,24 +500,12 @@ class Player(wx.Frame):
             self._on_play_clicked()
 
     def _on_timer_tick(self, evt):
-        """Update the time slider according to the current movie time.
         """
-        if self._is_playing():
-            # update the time on the slider
-            song_time = self._adapter.media_time
-            # Handle case where the actual track length exceeds estimated track length
-            song_length = max(self._playlist_model.get_item_key_value(self._now_playing_item, PlaylistModel.PMI_TIME),
-                              int(self._adapter.media_time))
-            self._transport_panel.set_current_time(song_time)
-
-            # Update song position in normal time format
-            self._transport_panel.set_current_song_position(format_time(song_time),
-                                                            format_time(song_length))
-
-            # Update playlist panel
-            if self._last_song_length != song_length:
-                self._playlist_panel.set_item_time(self._now_playing_item, song_length)
-                self._last_song_length = song_length
+        Once per second timer tick. Currently, unused.
+        :param evt: A wxEvent object
+        :return: None
+        """
+        pass
 
     def _on_time_slider_change(self, new_time):
         self._adapter.media_time = new_time
@@ -535,6 +551,18 @@ class Player(wx.Frame):
         VLC API documentation says that VLC is not reentrant.
         """
         wx_evt = self._song_ended_event(attr1="Song ended")
+        # post the event to the Player frame
+        wx.PostEvent(self, wx_evt)
+
+    def _on_position_changed_event(self, event):
+        """
+        This event comes from the media adapter. Here we simply
+        relay the event to the main wx Player frame. We do this because the
+        adapter may be running on a different thread. Specifically, the
+        VLC API documentation says that VLC is not reentrant.
+        :param event: The VLC event
+        """
+        wx_evt = self._song_position_changed_event()
         # post the event to the Player frame
         wx.PostEvent(self, wx_evt)
 
