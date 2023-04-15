@@ -314,10 +314,10 @@ class Player(wx.Frame):
         :param item: Playlist index number to queue, 0-n
         :return:
         """
-        file_path = self._playlist_model.playlist_items[item]["file_path"]
+        file_path = self._playlist_model.get_item_key_value(item, PlaylistModel.PMI_FILE_PATH)
         if os.path.exists(file_path):
             self._adapter.queue_media_file(file_path)
-            self._set_current_song_label(self._playlist_model.playlist_items[item]["name"])
+            self._set_current_song_label(self._playlist_model.get_item_key_value(item, PlaylistModel.PMI_NAME))
             self._set_current_playlist_label(f"{self._playlist_model.playlist_name} ({self._playlist_model.playlist_length} items)")
 
             # set the window id where to render video output
@@ -329,7 +329,7 @@ class Player(wx.Frame):
             self._transport_panel.set_volume(self._current_volume)
 
             # Set the ranges of the time slider
-            song_length = self._playlist_model.playlist_items[item]["time"]
+            song_length = self._playlist_model.get_item_key_value(item, PlaylistModel.PMI_TIME)
             self._transport_panel.set_time_range(0, song_length)
 
             self._now_playing_item = item
@@ -478,7 +478,7 @@ class Player(wx.Frame):
             # update the time on the slider
             song_time = self._adapter.media_time
             # Handle case where the actual track length exceeds estimated track length
-            song_length = max(self._playlist_model.playlist_items[self._now_playing_item]['time'],
+            song_length = max(self._playlist_model.get_item_key_value(self._now_playing_item, PlaylistModel.PMI_TIME),
                               int(self._adapter.media_time))
             self._transport_panel.set_current_time(song_time)
 

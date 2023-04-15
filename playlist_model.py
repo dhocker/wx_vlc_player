@@ -20,6 +20,14 @@ class PlaylistModel:
     """
     Models the playlist file
     """
+
+    # Item keys
+    PMI_FILE_PATH = "file_path"
+    PMI_NAME = "name"
+    PMI_ALBUM = "album"
+    PMI_ARTIST = "artist"
+    PMI_TIME = "time"
+
     def __init__(self):
         """
         Constructor
@@ -116,11 +124,11 @@ class PlaylistModel:
                 name = basename(file_path)
 
             song = {
-                "file_path": file_path,
-                "name": name,
-                "album": album,
-                "artist": artist,
-                "time": song_time
+                PlaylistModel.PMI_FILE_PATH: file_path,
+                PlaylistModel.PMI_NAME: name,
+                PlaylistModel.PMI_ALBUM: album,
+                PlaylistModel.PMI_ARTIST: artist,
+                PlaylistModel.PMI_TIME: song_time
             }
             song_list.append(song)
         return song_list
@@ -166,3 +174,12 @@ class PlaylistModel:
         if self._playlist_file_path != "":
             return basename(self._playlist_file_path)
         return "..."
+
+    def get_item_key_value(self, item, key):
+        """
+        Return the value of an item's key
+        :param item: The item index
+        :param key: The desired item key
+        :return: The value of the item's key
+        """
+        return self._playlist_items[item][key]
