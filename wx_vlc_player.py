@@ -314,10 +314,10 @@ class Player(wx.Frame):
         :param item: Playlist index number to queue, 0-n
         :return:
         """
-        file_name = self._playlist_model.playlist_items[item]["file_path"]
-        if os.path.exists(file_name):
-            self._adapter.queue_media_file(file_name)
-            self._set_current_song_label(basename(file_name))
+        file_path = self._playlist_model.playlist_items[item]["file_path"]
+        if os.path.exists(file_path):
+            self._adapter.queue_media_file(file_path)
+            self._set_current_song_label(self._playlist_model.playlist_items[item]["name"])
             self._set_current_playlist_label(f"{self._playlist_model.playlist_name} ({self._playlist_model.playlist_length} items)")
 
             # set the window id where to render video output
@@ -342,7 +342,7 @@ class Player(wx.Frame):
             self._transport_panel.enable_next_button(True)
             self._transport_panel.enable_previous_button(True)
         else:
-            self._show_error_dlg(f"File not found: {file_name}")
+            self._show_error_dlg(f"File not found: {file_path}")
 
     def on_clear_playlist(self, evt):
         self._clear_playlist()
