@@ -14,6 +14,7 @@ import wx
 from os.path import basename, splitext
 from urllib.parse import unquote
 from mutagen.mp3 import MP3
+from wx_utils import show_error_message
 
 
 class PlaylistModel:
@@ -85,6 +86,24 @@ class PlaylistModel:
         :return:
         """
         self._playlist_items = []
+
+    def save_playlist(self, file_path):
+        """
+        Save the current playlist items to the given file
+        :param file_path: Full file path where the playlist is to be saved
+        :return: True if the playlist was saved. Otherwise, false.
+        """
+        saved = False
+        try:
+            with open(file_path, 'w') as fh:
+                for rec in self._playlist_items:
+                    # Terminate each record with a line feed character
+                    fh.write(f"{rec[PlaylistModel.PMI_FILE_PATH]}\n")
+            saved = True
+        except IOError as ex:
+            show_error_message(None, f"{str(ex)}", f"Unable to save {file_path}")
+
+        return saved
 
     @staticmethod
     def _create_item_list(songs, progress_dlg=None):

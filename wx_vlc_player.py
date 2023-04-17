@@ -146,10 +146,13 @@ class Player(wx.Frame):
         self.file_menu.Append(1, "&Open playlist", "Open playlist file...")
         self.file_menu.Append(3, "Clear playlist", "Clear the playlist")
         self.file_menu.AppendSeparator()
+        self.file_menu.Append(4, "&Save playlist", "Save the playlist")
+        self.file_menu.AppendSeparator()
         self.file_menu.Append(2, "&Close", "Quit")
         self.Bind(wx.EVT_MENU, self.on_open_playlist, id=1)
         self.Bind(wx.EVT_MENU, self.on_exit, id=2)
         self.Bind(wx.EVT_MENU, self.on_clear_playlist, id=3)
+        self.Bind(wx.EVT_MENU, self._on_save_playlist, id=4)
         self.frame_menubar.Append(self.file_menu, "File")
         self.SetMenuBar(self.frame_menubar)
 
@@ -395,6 +398,25 @@ class Player(wx.Frame):
         self._transport_panel.enable_next_button(False)
         self._transport_panel.enable_previous_button(False)
 
+    def _on_save_playlist(self, event):
+        """
+        Save the current playlist (after filtering out VLC artifacts)
+        :param event: Not used
+        :return: None
+        """
+        with wx.FileDialog(self, "Save playlist file",
+                           wildcard="Playlist files (*.m3u)|*.m3u",
+                           defaultDir=self._config[Configuration.CFG_PLAYLIST_FOLDER],
+                           defaultFile=self._playlist_model.playlist_name,
+                           style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT) as file_dialog:
+
+            if file_dialog.ShowModal() == wx.ID_CANCEL:
+                return  # the user changed their mind
+
+            # Save the current playlist
+            path_name = file_dialog.GetPath()
+            self._playlist_model.save_playlist(path_name)
+
     def _on_keyboard_char(self, event):
         keycode = event.GetUnicodeKey()
         if keycode == wx.WXK_SPACE:
@@ -487,7 +509,7 @@ class Player(wx.Frame):
         PLay the next song
         :return:
         """
-        if self._now_playing_item > 0:
+        if self._now_playing_item < (self._playlist_model.playlist_length - 1):
             self._on_stop_clicked()
             if self._random_play:
                 next_item = random.randrange(self._playlist_model.playlist_length)

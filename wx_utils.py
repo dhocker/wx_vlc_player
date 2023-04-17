@@ -31,3 +31,18 @@ def load_bitmap(bitmap_name):
     if os.path.exists(bitmap_file):
         return wx.Bitmap(bitmap_file)
     return wx.Bitmap(os.path.join("resources", bitmap_name))
+
+
+def show_error_message(parent, message, title):
+    """
+    Show a modal error message dialog box
+    :param parent: Parent window/frame or None
+    :param message: Error message text
+    :param title: Dialog title
+    :return: None
+    """
+    dlg = wx.MessageDialog(parent,
+                           message,
+                           title,
+                           wx.OK | wx.ICON_ERROR)
+    dlg.ShowModal()

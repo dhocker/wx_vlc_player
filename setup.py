@@ -13,10 +13,10 @@ APP = ['wx_vlc_player.py']
 DATA_FILES = [
     ("images", [
         "resources/wx_vlc_player.gif",
-        "resources/next-track.png",
+        "resources/next-track-2.png",
         "resources/pause.png",
         "resources/play-solid.png",
-        "resources/previous-track.png",
+        "resources/previous-track-2.png",
         "resources/stop.png",
         "resources/muted.png",
         "resources/unmuted.png",
