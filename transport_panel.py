@@ -84,7 +84,7 @@ class TransportPanel(wx.Panel):
                                                   style=wx.ALIGN_CENTER | wx.ST_NO_AUTORESIZE)
         self._transport_now_playing.SetFont(self._large_bold_font)
         self._transport_now_playing.SetToolTip("Currently playing song")
-        self._previous_button = wx.BitmapButton(self, -1, load_bitmap("previous-track.png"))
+        self._previous_button = wx.BitmapButton(self, -1, load_bitmap("previous-track-2.png"))
         self._previous_button.Disable()
         self._previous_button.SetToolTip("Play previous song")
         self._play_button = wx.BitmapButton(self, -1, load_bitmap("play-solid.png"))
@@ -93,7 +93,7 @@ class TransportPanel(wx.Panel):
         self._stop_button = wx.BitmapButton(self, -1, load_bitmap("stop.png"))
         self._stop_button.Disable()
         self._stop_button.SetToolTip("Stop playing")
-        self._next_button = wx.BitmapButton(self, -1, load_bitmap("next-track.png"))
+        self._next_button = wx.BitmapButton(self, -1, load_bitmap("next-track-2.png"))
         self._next_button.Disable()
         self._next_button.SetToolTip("Play next song")
         self._random_button = wx.BitmapToggleButton(self,
