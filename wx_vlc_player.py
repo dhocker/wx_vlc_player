@@ -47,6 +47,7 @@ from playlist_panel import PlaylistPanel
 from transport_panel import TransportPanel
 from playlist_model import PlaylistModel
 from song_utils import format_time
+from wx_utils import show_info_message, show_error_message
 
 # import standard libraries
 from os.path import basename, join as joined
@@ -373,7 +374,7 @@ class Player(wx.Frame):
             self._transport_panel.enable_next_button(True)
             self._transport_panel.enable_previous_button(True)
         else:
-            self._show_error_dlg(f"File not found: {file_path}")
+            show_error_message(self, f"File not found: {file_path}", app_title)
 
     def on_clear_playlist(self, evt):
         self._clear_playlist()
@@ -466,7 +467,7 @@ class Player(wx.Frame):
         else:
             self._adapter.volume = self._current_volume
             if self._adapter.play():  # == -1:
-                self._show_error_dlg("Unable to play.")
+                show_error_message(self, "Unable to play.", app_title)
                 return
             self._timer.Start(Player.WX_TIMER_INTERVAL)  # XXX millisecs
             # Show the pause icon
@@ -605,15 +606,7 @@ class Player(wx.Frame):
             f"wx Module: {wx.__name__}\n" \
             f"wxPython Version: {wx.version()}\n"
 
-        about_dlg = wx.MessageDialog(self, dlg_text, app_title, wx.OK | wx.ICON_INFORMATION)
-        about_dlg.ShowModal()
-
-    def _show_error_dlg(self, errormessage):
-        """Display a simple error dialog.
-        """
-        error_dlg = wx.MessageDialog(self, errormessage, 'Error', wx.OK|
-                                                                wx.ICON_ERROR)
-        error_dlg.ShowModal()
+        show_info_message(self, dlg_text, app_title)
 
 
 if __name__ == "__main__":

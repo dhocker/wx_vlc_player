@@ -46,3 +46,18 @@ def show_error_message(parent, message, title):
                            title,
                            wx.OK | wx.ICON_ERROR)
     dlg.ShowModal()
+
+
+def show_info_message(parent, message, title):
+    """
+    Show a modal information message dialog box
+    :param parent: Parent window/frame or None
+    :param message: Infomation message text
+    :param title: Dialog title
+    :return: None
+    """
+    dlg = wx.MessageDialog(parent,
+                           message,
+                           title,
+                           wx.OK | wx.ICON_INFORMATION)
+    dlg.ShowModal()
