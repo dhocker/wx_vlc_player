@@ -456,7 +456,7 @@ class Player(wx.Frame):
         self._adapter.pause()
         self._timer.Stop()
         self._transport_panel.set_play_button_icon(True)
-        self._transport_panel.enable_stop_button(False)
+        self._transport_panel.enable_stop_button(True)
 
     def _pause_to_play(self):
         # Pause/Stop to Play
