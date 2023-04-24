@@ -15,6 +15,6 @@ json.dump(version, fh)
 fh.close()
 
 fh = open("version.py", "w")
-fh.write(f"version = \"{version['major']}.{version['minor']}.{version['patch']}.{version['build']}\"")
+fh.write(f"version = \"{version['major']}.{version['minor']}.{version['patch']}.{version['build']}\"\n")
 
 print(version)
