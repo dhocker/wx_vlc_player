@@ -33,6 +33,7 @@ class Configuration():
 
     # Keys
     CFG_PLAYLIST_FOLDER = "playlist_folder"  # last used playlist folder
+    CFG_FILES_FOLDER = "files_folder"
     CFG_PLAYLIST = "playlist"
     CFG_VOLUME = "volume"  # last volume setting
     CFG_RECT = "rect"  # position and size of app window

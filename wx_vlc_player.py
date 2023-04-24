@@ -147,6 +147,8 @@ class Player(wx.Frame):
         self.file_menu.Append(1, "&Open playlist", "Open playlist file...")
         self.file_menu.Append(3, "Clear playlist", "Clear the playlist")
         self.file_menu.AppendSeparator()
+        self.file_menu.Append(5, "&Add to playlist", "Add files to playlist")
+        self.file_menu.AppendSeparator()
         self.file_menu.Append(4, "&Save playlist", "Save the playlist")
         self.file_menu.AppendSeparator()
         self.file_menu.Append(2, "&Close", "Quit")
@@ -154,6 +156,7 @@ class Player(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_exit, id=2)
         self.Bind(wx.EVT_MENU, self.on_clear_playlist, id=3)
         self.Bind(wx.EVT_MENU, self._on_save_playlist, id=4)
+        self.Bind(wx.EVT_MENU, self._on_add_to_playlist, id=5)
         self.frame_menubar.Append(self.file_menu, "File")
         self.SetMenuBar(self.frame_menubar)
 
@@ -278,6 +281,39 @@ class Player(wx.Frame):
         """
         self.Close()
 
+    def _on_add_to_playlist(self, evt):
+        """
+        Add/append files to the current playlist
+        :param evt: wxEvent
+        :return:
+        """
+        self._on_stop_clicked()
+        # If the playlist is currently empty, we'll treat adding files
+        # like a playlist being loaded.
+        empty_playlist = self._playlist_model.playlist_length == 0
+
+        wildcard = "Audio files (*.mp3;*.wav)|*.mp3;*.wav|Video files (*.mp4;*.mkv)|*.mp4;*.mkv"
+        dlg = wx.FileDialog(self,
+                            message="Choose files to add to playlist",
+                            defaultDir=self._config[Configuration.CFG_FILES_FOLDER],
+                            wildcard=wildcard,
+                            style=wx.FD_OPEN | wx.FD_MULTIPLE)
+
+        if dlg.ShowModal() == wx.ID_OK:
+            file_paths = dlg.GetPaths()
+            # Add to model
+            # Update playlist panel
+            self._playlist_model.append_to_playlist(file_paths)
+            self._playlist_panel.load_playlist(self._playlist_model.playlist_items)
+
+            # Save directory where files originated
+            self._config[Configuration.CFG_FILES_FOLDER] = dlg.GetDirectory()
+            Configuration.save_configuration()
+
+            # If the playlist was empty, queue the first item ready to play
+            if empty_playlist:
+                self._queue_file_for_play(0)
+
     def on_open_playlist(self, evt):
         """
         Let the user load a playlist file
@@ -378,6 +414,9 @@ class Player(wx.Frame):
 
     def on_clear_playlist(self, evt):
         self._clear_playlist()
+        # Forget the current playlist
+        self._config[Configuration.CFG_PLAYLIST] = ""
+        Configuration.save_configuration()
 
     def _clear_playlist(self):
         """

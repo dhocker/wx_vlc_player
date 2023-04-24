@@ -80,6 +80,15 @@ class PlaylistModel:
 
         return self._playlist_items
 
+    def append_to_playlist(self, file_paths):
+        """
+        Append a list of files to the current item list
+        :param file_paths: A list of file paths (strings)
+        :return: None
+        """
+        new_items = PlaylistModel._create_item_list(file_paths)
+        self._playlist_items.extend(new_items)
+
     def clear_playlist(self):
         """
         Clear the current playlist
