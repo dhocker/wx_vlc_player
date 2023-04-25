@@ -36,8 +36,8 @@ class PlaylistPanel(wx.Panel):
                                                  label="N/A",
                                                  style=wx.ALIGN_CENTER | wx.ST_NO_AUTORESIZE)
 
-        # List of songs
-        self._playlist = wx.ListCtrl(self, wx.ID_ANY, style=wx.LC_REPORT | wx.LC_SINGLE_SEL)
+        # List of songs. Note that multi-select is on by default.
+        self._playlist = wx.ListCtrl(self, wx.ID_ANY, style=wx.LC_REPORT)
 
         # TODO Set the attributes of the column headers. See wx.SetHeaderAttr.
         # NOTE: Not implemented in wxPython macOS version
