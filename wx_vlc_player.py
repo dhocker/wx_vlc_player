@@ -486,6 +486,7 @@ class Player(wx.Frame):
             # Save the current playlist
             path_name = file_dialog.GetPath()
             self._playlist_model.save_playlist_as(path_name)
+            self._set_current_playlist_label(f"{self._playlist_model.playlist_name} ({self._playlist_model.playlist_length} items)")
 
     def _on_keyboard_char(self, event):
         keycode = event.GetUnicodeKey()
