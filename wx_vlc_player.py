@@ -150,6 +150,7 @@ class Player(wx.Frame):
         self.file_menu.Append(5, "&Add to playlist", "Add files to playlist")
         self.file_menu.AppendSeparator()
         self.file_menu.Append(4, "&Save playlist", "Save the playlist")
+        self.file_menu.Append(6, "Save playlist &as", "Save the playlist as...")
         self.file_menu.AppendSeparator()
         self.file_menu.Append(2, "&Close", "Quit")
         self.Bind(wx.EVT_MENU, self.on_open_playlist, id=1)
@@ -157,6 +158,7 @@ class Player(wx.Frame):
         self.Bind(wx.EVT_MENU, self.on_clear_playlist, id=3)
         self.Bind(wx.EVT_MENU, self._on_save_playlist, id=4)
         self.Bind(wx.EVT_MENU, self._on_add_to_playlist, id=5)
+        self.Bind(wx.EVT_MENU, self._on_save_playlist_as, id=6)
         self.frame_menubar.Append(self.file_menu, "File")
         self.SetMenuBar(self.frame_menubar)
 
@@ -444,7 +446,16 @@ class Player(wx.Frame):
         :param event: Not used
         :return: None
         """
-        with wx.FileDialog(self, "Save playlist file",
+        # Save the current playlist
+        self._playlist_model.save_playlist()
+
+    def _on_save_playlist_as(self, event):
+        """
+        Save the current playlist (after filtering out VLC artifacts) as a new playlist
+        :param event: Not used
+        :return: None
+        """
+        with wx.FileDialog(self, message="Save playlist file as...",
                            wildcard="Playlist files (*.m3u)|*.m3u",
                            defaultDir=self._config[Configuration.CFG_PLAYLIST_FOLDER],
                            defaultFile=self._playlist_model.playlist_name,
@@ -455,7 +466,7 @@ class Player(wx.Frame):
 
             # Save the current playlist
             path_name = file_dialog.GetPath()
-            self._playlist_model.save_playlist(path_name)
+            self._playlist_model.save_playlist_as(path_name)
 
     def _on_keyboard_char(self, event):
         keycode = event.GetUnicodeKey()

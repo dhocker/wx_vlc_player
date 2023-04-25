@@ -96,7 +96,14 @@ class PlaylistModel:
         """
         self._playlist_items = []
 
-    def save_playlist(self, file_path):
+    def save_playlist(self):
+        """
+        Save the current playlist under the current name
+        :return: True if saved, otherwise False
+        """
+        return self.save_playlist_as(self._playlist_file_path)
+
+    def save_playlist_as(self, file_path):
         """
         Save the current playlist items to the given file
         :param file_path: Full file path where the playlist is to be saved
@@ -109,6 +116,7 @@ class PlaylistModel:
                     # Terminate each record with a line feed character
                     fh.write(f"{rec[PlaylistModel.PMI_FILE_PATH]}\n")
             saved = True
+            self._playlist_file_path = file_path
         except IOError as ex:
             show_error_message(None, f"{str(ex)}", f"Unable to save {file_path}")
 
