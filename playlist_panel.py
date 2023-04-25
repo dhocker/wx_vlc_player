@@ -144,9 +144,25 @@ class PlaylistPanel(wx.Panel):
         return self._playlist.GetItemCount()
 
     @property
+    def selected_items(self):
+        """
+        Return a list of the selected items in the playlist
+        :return: A list of item indices
+        """
+        # This is how the GetNextSelected method works.
+        # It starts looking at the next item after the specified starting index.
+        # In this case, we start looking at item index (-1 + 1) = 0.
+        idx = -1
+        selected = []
+        for i in range(self._playlist.GetSelectedItemCount()):
+            idx = self._playlist.GetNextSelected(idx)
+            selected.append(idx)
+        return selected
+
+    @property
     def selection(self):
         """
-        Return the currently selected item
+        Return the last selected item
         :return:
         """
         return self._selected_item

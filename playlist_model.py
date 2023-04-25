@@ -219,3 +219,12 @@ class PlaylistModel:
         :return: The value of the item's key
         """
         return self._playlist_items[item][key]
+
+    def delete_items(self, deletion_list):
+        """
+        Delete items from the current playlist
+        :param deletion_list: A list of item indices to be deleted
+        :return: None
+        """
+        for i in range(len(deletion_list) - 1, -1, -1):
+            self._playlist_items.pop(i)

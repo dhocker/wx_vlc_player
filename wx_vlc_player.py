@@ -141,25 +141,34 @@ class Player(wx.Frame):
         Configuration.save_configuration()
 
     def _create_menubar(self):
-        #   File Menu
         self.frame_menubar = wx.MenuBar()
-        self.file_menu = wx.Menu()
-        self.file_menu.Append(1, "&Open playlist", "Open playlist file...")
-        self.file_menu.Append(3, "Clear playlist", "Clear the playlist")
-        self.file_menu.AppendSeparator()
-        self.file_menu.Append(5, "&Add to playlist", "Add files to playlist")
-        self.file_menu.AppendSeparator()
-        self.file_menu.Append(4, "&Save playlist", "Save the playlist")
-        self.file_menu.Append(6, "Save playlist &as", "Save the playlist as...")
-        self.file_menu.AppendSeparator()
-        self.file_menu.Append(2, "&Close", "Quit")
+
+        #   File Menu
+        self._file_menu = wx.Menu()
+        self._file_menu.Append(1, "&Open playlist", "Open playlist file...")
+        self._file_menu.AppendSeparator()
+        self._file_menu.Append(2, "&Save playlist", "Save the playlist")
+        self._file_menu.Append(3, "Save playlist &as", "Save the playlist as...")
+        self._file_menu.AppendSeparator()
+        self._file_menu.Append(4, "&Close", "Quit")
         self.Bind(wx.EVT_MENU, self.on_open_playlist, id=1)
-        self.Bind(wx.EVT_MENU, self.on_exit, id=2)
-        self.Bind(wx.EVT_MENU, self.on_clear_playlist, id=3)
-        self.Bind(wx.EVT_MENU, self._on_save_playlist, id=4)
-        self.Bind(wx.EVT_MENU, self._on_add_to_playlist, id=5)
-        self.Bind(wx.EVT_MENU, self._on_save_playlist_as, id=6)
-        self.frame_menubar.Append(self.file_menu, "File")
+        self.Bind(wx.EVT_MENU, self._on_save_playlist, id=2)
+        self.Bind(wx.EVT_MENU, self._on_save_playlist_as, id=3)
+        self.Bind(wx.EVT_MENU, self.on_exit, id=4)
+
+        # Edit menu
+        self._edit_menu = wx.Menu()
+        self._edit_menu.Append(100, "&Add to playlist", "Add files to playlist")
+        self._edit_menu.AppendSeparator()
+        self._edit_menu.Append(101, "&Delete from playlist", "Delete files from playlist")
+        self._edit_menu.Append(102, "&Clear playlist", "Clear the playlist")
+        self.Bind(wx.EVT_MENU, self._on_add_to_playlist, id=100)
+        self.Bind(wx.EVT_MENU, self._on_delete_from_playlist, id=101)
+        self.Bind(wx.EVT_MENU, self._on_clear_playlist, id=102)
+
+        # Complete the menu bar
+        self.frame_menubar.Append(self._file_menu, "&File")
+        self.frame_menubar.Append(self._edit_menu, "&Edit")
         self.SetMenuBar(self.frame_menubar)
 
         # OS dependent menu
@@ -316,6 +325,16 @@ class Player(wx.Frame):
             if empty_playlist:
                 self._queue_file_for_play(0)
 
+    def _on_delete_from_playlist(self, evt):
+        """
+        Delete the currently selected items/songs/tracks from the current playlist.
+        :param evt: wxEvent
+        :return: None
+        """
+        selected = self._playlist_panel.selected_items
+        self._playlist_model.delete_items(selected)
+        self._playlist_panel.load_playlist(self._playlist_model.playlist_items)
+
     def on_open_playlist(self, evt):
         """
         Let the user load a playlist file
@@ -414,7 +433,7 @@ class Player(wx.Frame):
         else:
             show_error_message(self, f"File not found: {file_path}", app_title)
 
-    def on_clear_playlist(self, evt):
+    def _on_clear_playlist(self, evt):
         self._clear_playlist()
         # Forget the current playlist
         self._config[Configuration.CFG_PLAYLIST] = ""
