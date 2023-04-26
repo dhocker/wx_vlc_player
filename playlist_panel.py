@@ -174,7 +174,15 @@ class PlaylistPanel(wx.Panel):
         :param item_index:
         :return:
         """
-        self._playlist.Select(item_index)
+        # Avoid "on selected" event recursion by not selecting an item if it
+        # is already selected.
+        if item_index == self._selected_item:
+            return
+
+        # Unselect the current selection so we don't cause multiple selections
+        if self._selected_item >= 0:
+            self._playlist.Select(self._selected_item, on=False)
+        self._playlist.Select(item_index, on=True)
         self._playlist.EnsureVisible(item_index)
         self._selected_item = item_index
 
