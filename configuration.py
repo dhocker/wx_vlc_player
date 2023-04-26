@@ -25,7 +25,7 @@ class Configuration():
     # If no wx_vlc_player.conf file exists this will be the default configuration
     _active_config = {
         "playlist_folder": "",
-        "playlist": "",
+        "playlists": [],
         "volume": 50,
         "rect": {"x": -1, "y": -1, "width": 550, "height": 500},
         "random-play": "False",
@@ -34,7 +34,7 @@ class Configuration():
     # Keys
     CFG_PLAYLIST_FOLDER = "playlist_folder"  # last used playlist folder
     CFG_FILES_FOLDER = "files_folder"
-    CFG_PLAYLIST = "playlist"
+    CFG_PLAYLISTS = "playlists"
     CFG_VOLUME = "volume"  # last volume setting
     CFG_RECT = "rect"  # position and size of app window
     CFG_RANDOM_PLAY = "random-play"

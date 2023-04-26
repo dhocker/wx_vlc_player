@@ -120,9 +120,9 @@ class Player(wx.Frame):
         Executes AFTER the UI is active
         :return:
         """
-        # Load the last playlist
-        playlist = self._config[Configuration.CFG_PLAYLIST]
-        if playlist != "":
+        # Load the last set of playlists
+        playlists = self._config[Configuration.CFG_PLAYLISTS]
+        for playlist in playlists:
             self._load_playlist(playlist)
 
     def on_close(self):
@@ -145,7 +145,7 @@ class Player(wx.Frame):
 
         #   File Menu
         self._file_menu = wx.Menu()
-        self._file_menu.Append(1, "&Open playlist", "Open playlist file...")
+        self._file_menu.Append(1, "&Add/append a playlist file", "Add/append a playlist file")
         self._file_menu.AppendSeparator()
         self._file_menu.Append(2, "&Save playlist", "Save the playlist")
         self._file_menu.Append(3, "Save playlist &as", "Save the playlist as...")
@@ -158,7 +158,7 @@ class Player(wx.Frame):
 
         # Edit menu
         self._edit_menu = wx.Menu()
-        self._edit_menu.Append(100, "&Add to playlist", "Add files to playlist")
+        self._edit_menu.Append(100, "&Add files to playlist", "Add files to playlist")
         self._edit_menu.AppendSeparator()
         self._edit_menu.Append(101, "&Delete from playlist", "Delete files from playlist")
         self._edit_menu.Append(102, "&Clear playlist", "Clear the playlist")
@@ -372,7 +372,7 @@ class Player(wx.Frame):
         # Load the playlist
         if file_name is not None:
             self._load_playlist(file_name)
-            self._config[Configuration.CFG_PLAYLIST] = file_name
+            self._config[Configuration.CFG_PLAYLISTS].append(file_name)
             Configuration.save_configuration()
 
     def _load_playlist(self, file_name):
@@ -381,8 +381,6 @@ class Player(wx.Frame):
         :param file_name: Full path file name
         :return:
         """
-        self._clear_playlist()
-
         # Loading a playlist can take some time
         dlg = wx.GenericProgressDialog(f"Loading Playlist {basename(file_name)}", "", parent=self)
 
@@ -443,7 +441,7 @@ class Player(wx.Frame):
     def _on_clear_playlist(self, evt):
         self._clear_playlist()
         # Forget the current playlist
-        self._config[Configuration.CFG_PLAYLIST] = ""
+        self._config[Configuration.CFG_PLAYLISTS] = []
         Configuration.save_configuration()
 
     def _clear_playlist(self):
@@ -494,6 +492,9 @@ class Player(wx.Frame):
             path_name = file_dialog.GetPath()
             self._playlist_model.save_playlist_as(path_name)
             self._set_current_playlist_label(f"{self._playlist_model.playlist_name} ({self._playlist_model.playlist_length} items)")
+            # Update the config file to reflect the new playlist
+            self._config[Configuration.CFG_PLAYLISTS] = [path_name]
+            Configuration.save_configuration()
 
     def _on_keyboard_char(self, event):
         keycode = event.GetUnicodeKey()

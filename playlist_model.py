@@ -43,8 +43,6 @@ class PlaylistModel:
         :param file_name: Full path file name
         :return:
         """
-        self.clear_playlist()
-
         # Loading a playlist can take some time
         dlg = wx.GenericProgressDialog(f"Loading Playlist {basename(file_name)}", "")
 
@@ -71,7 +69,8 @@ class PlaylistModel:
         # File list with info   `
         dlg.Pulse("Reading file tags...")
         # Build the item list from the list of file_paths
-        self._playlist_items = PlaylistModel._create_item_list(song_files, progress_dlg=dlg)
+        new_items = PlaylistModel._create_item_list(song_files, progress_dlg=dlg)
+        self._playlist_items.extend(new_items)
 
         # End the progress dialog
         dlg.Destroy()
