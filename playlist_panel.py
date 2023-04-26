@@ -28,7 +28,7 @@ class PlaylistPanel(wx.Panel):
         super().__init__(parent)
 
         self.SetDoubleBuffered(True)
-        self._selected_item = 0
+        self._selected_item = -1
         self._song_list = []
 
         # Currently playing song and its playlist
@@ -149,14 +149,11 @@ class PlaylistPanel(wx.Panel):
         Return a list of the selected items in the playlist
         :return: A list of item indices
         """
-        # This is how the GetNextSelected method works.
-        # It starts looking at the next item after the specified starting index.
-        # In this case, we start looking at item index (-1 + 1) = 0.
-        idx = -1
+        idx = self._playlist.GetFirstSelected()
         selected = []
-        for i in range(self._playlist.GetSelectedItemCount()):
-            idx = self._playlist.GetNextSelected(idx)
+        while idx != -1:
             selected.append(idx)
+            idx = self._playlist.GetNextSelected(idx)
         return selected
 
     @property
@@ -171,7 +168,7 @@ class PlaylistPanel(wx.Panel):
     def selection(self, item_index):
         """
         Set the current row/item
-        :param item_index:
+        :param item_index: The item index to be selected. Use -1 to select nothing.
         :return:
         """
         # Avoid "on selected" event recursion by not selecting an item if it
@@ -179,11 +176,13 @@ class PlaylistPanel(wx.Panel):
         if item_index == self._selected_item:
             return
 
-        # Unselect the current selection so we don't cause multiple selections
-        if self._selected_item >= 0:
+        # Unselect the current selection, so we don't cause multiple selections
+        if self._playlist.GetSelectedItemCount() > 0 and self._selected_item >= 0:
             self._playlist.Select(self._selected_item, on=False)
-        self._playlist.Select(item_index, on=True)
-        self._playlist.EnsureVisible(item_index)
+        # If there is something to select
+        if item_index >= 0 and item_index < self._playlist.ItemCount:
+            self._playlist.Select(item_index, on=True)
+            self._playlist.EnsureVisible(item_index)
         self._selected_item = item_index
 
     def set_current_playlist_label(self, label):

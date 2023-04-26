@@ -334,6 +334,13 @@ class Player(wx.Frame):
         selected = self._playlist_panel.selected_items
         self._playlist_model.delete_items(selected)
         self._playlist_panel.load_playlist(self._playlist_model.playlist_items)
+        # At this point, self._now_playing_item is likely to be invalid
+        if self._playlist_model.playlist_length > 0:
+            # Arbitrarily select the first item
+            self._playlist_panel.selection = 0
+        else:
+            # The list is empty, so there is nothing to select
+            self._playlist_panel.selection = -1
 
     def on_open_playlist(self, evt):
         """
