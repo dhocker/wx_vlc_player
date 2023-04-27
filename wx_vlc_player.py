@@ -351,6 +351,9 @@ class Player(wx.Frame):
             # The list is empty, so there is nothing to select
             self._playlist_panel.selection = -1
 
+        # Track unsaved changes
+        self._unsaved_playlist_changes = True
+
     def on_open_playlist(self, evt):
         """
         Let the user load a playlist file
