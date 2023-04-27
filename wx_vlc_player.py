@@ -115,6 +115,9 @@ class Player(wx.Frame):
         wx_evt = self._start_up_event()
         wx.PostEvent(self, wx_evt)
 
+        # Start with no unsaved changes
+        self._unsaved_playlist_changes = False
+
     def _on_start_up(self, event):
         """
         Executes AFTER the UI is active
@@ -137,20 +140,23 @@ class Player(wx.Frame):
 
         # Save the current volume setting
         self._config[Configuration.CFG_VOLUME] = self._current_volume
-
         Configuration.save_configuration()
+
+        # Handle unsaved changes
+        if self._unsaved_playlist_changes:
+            self._save_playlist_as("There are unsaved playlist list changes. Do you want to save them?")
 
     def _create_menubar(self):
         self.frame_menubar = wx.MenuBar()
 
         #   File Menu
-        self._file_menu = wx.Menu()
-        self._file_menu.Append(1, "&Add/append a playlist file", "Add/append a playlist file")
-        self._file_menu.AppendSeparator()
-        self._file_menu.Append(2, "&Save playlist", "Save the playlist")
-        self._file_menu.Append(3, "Save playlist &as", "Save the playlist as...")
-        self._file_menu.AppendSeparator()
-        self._file_menu.Append(4, "&Close", "Quit")
+        self._playlist_menu = wx.Menu()
+        self._playlist_menu.Append(1, "&Add/append a playlist file", "Add/append a playlist file")
+        self._playlist_menu.AppendSeparator()
+        self._playlist_menu.Append(2, "&Save playlist", "Save the playlist")
+        self._playlist_menu.Append(3, "Save playlist &as", "Save the playlist as...")
+        self._playlist_menu.AppendSeparator()
+        self._playlist_menu.Append(4, "&Close", "Quit")
         self.Bind(wx.EVT_MENU, self.on_open_playlist, id=1)
         self.Bind(wx.EVT_MENU, self._on_save_playlist, id=2)
         self.Bind(wx.EVT_MENU, self._on_save_playlist_as, id=3)
@@ -167,7 +173,7 @@ class Player(wx.Frame):
         self.Bind(wx.EVT_MENU, self._on_clear_playlist, id=102)
 
         # Complete the menu bar
-        self.frame_menubar.Append(self._file_menu, "&File")
+        self.frame_menubar.Append(self._playlist_menu, "&Playlist")
         self.frame_menubar.Append(self._edit_menu, "&Edit")
         self.SetMenuBar(self.frame_menubar)
 
@@ -321,6 +327,9 @@ class Player(wx.Frame):
             self._config[Configuration.CFG_FILES_FOLDER] = dlg.GetDirectory()
             Configuration.save_configuration()
 
+            # Now, there's unsaved changes
+            self._unsaved_playlist_changes = True
+
             # If the playlist was empty, queue the first item ready to play
             if empty_playlist:
                 self._queue_file_for_play(0)
@@ -373,6 +382,7 @@ class Player(wx.Frame):
         if file_name is not None:
             self._load_playlist(file_name)
             self._config[Configuration.CFG_PLAYLISTS].append(file_name)
+            self._unsaved_playlist_changes = len(self._config[Configuration.CFG_PLAYLISTS]) > 1
             Configuration.save_configuration()
 
     def _load_playlist(self, file_name):
@@ -464,6 +474,9 @@ class Player(wx.Frame):
         self._transport_panel.enable_next_button(False)
         self._transport_panel.enable_previous_button(False)
 
+        # No unsaved changes anymore
+        self._unsaved_playlist_changes = False
+
     def _on_save_playlist(self, event):
         """
         Save the current playlist (after filtering out VLC artifacts)
@@ -473,13 +486,24 @@ class Player(wx.Frame):
         # Save the current playlist
         self._playlist_model.save_playlist()
 
+        # No unsaved changes anymore
+        self._unsaved_playlist_changes = False
+
     def _on_save_playlist_as(self, event):
         """
         Save the current playlist (after filtering out VLC artifacts) as a new playlist
         :param event: Not used
         :return: None
         """
-        with wx.FileDialog(self, message="Save playlist file as...",
+        self._save_playlist_as("Save playlist file as...")
+
+    def _save_playlist_as(self, message):
+        """
+        Save the current playlist as a new playlist
+        :param message: A prompt for the user
+        :return: None
+        """
+        with wx.FileDialog(self, message=message,
                            wildcard="Playlist files (*.m3u)|*.m3u",
                            defaultDir=self._config[Configuration.CFG_PLAYLIST_FOLDER],
                            defaultFile=self._playlist_model.playlist_name,
@@ -495,6 +519,8 @@ class Player(wx.Frame):
             # Update the config file to reflect the new playlist
             self._config[Configuration.CFG_PLAYLISTS] = [path_name]
             Configuration.save_configuration()
+            # No unsaved changes anymore
+            self._unsaved_playlist_changes = False
 
     def _on_keyboard_char(self, event):
         keycode = event.GetUnicodeKey()
