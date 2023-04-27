@@ -225,5 +225,6 @@ class PlaylistModel:
         :param deletion_list: A list of item indices to be deleted
         :return: None
         """
+        # Note that we delete items from the bottom to the top
         for i in range(len(deletion_list) - 1, -1, -1):
-            self._playlist_items.pop(i)
+            self._playlist_items.pop(deletion_list[i])
