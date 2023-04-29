@@ -33,7 +33,7 @@ class PlaylistPanel(wx.Panel):
 
         # Currently playing song and its playlist
         self._current_playlist_label = wx.StaticText(self,
-                                                 label="N/A",
+                                                 label="...",
                                                  style=wx.ALIGN_CENTER | wx.ST_NO_AUTORESIZE)
 
         # List of songs. Note that multi-select is on by default.

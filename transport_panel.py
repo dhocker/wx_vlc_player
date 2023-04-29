@@ -80,7 +80,7 @@ class TransportPanel(wx.Panel):
         self._time_slider.SetToolTip("Current song position")
         self._time_slider.SetCursor(wx.Cursor(wx.CURSOR_HAND))
         self._transport_now_playing=wx.StaticText(self,
-                                                  label="N/A",
+                                                  label="...",
                                                   style=wx.ALIGN_CENTER | wx.ST_NO_AUTORESIZE)
         self._transport_now_playing.SetFont(self._large_bold_font)
         self._transport_now_playing.SetToolTip("Currently playing song")

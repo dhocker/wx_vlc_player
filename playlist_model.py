@@ -36,6 +36,7 @@ class PlaylistModel:
         # A list of dicts where each dict defines a media file
         self._playlist_items = []
         self._playlist_file_path = ""
+        self._loaded_playlist_count = 0
 
     def load_playlist(self, file_name):
         """
@@ -75,7 +76,11 @@ class PlaylistModel:
         # End the progress dialog
         dlg.Destroy()
 
-        self._playlist_file_path = file_name
+        # This sets the "current" playlist name to the first loaded playlist
+        if self._loaded_playlist_count == 0:
+            self._playlist_file_path = file_name
+        # Updated count of playlists loaded
+        self._loaded_playlist_count += 1
 
         return self._playlist_items
 
@@ -93,7 +98,8 @@ class PlaylistModel:
         Clear the current playlist
         :return:
         """
-        self._playlist_items = []
+        self._playlist_items.clear()
+        self._loaded_playlist_count = 0
 
     def save_playlist(self):
         """
@@ -203,12 +209,20 @@ class PlaylistModel:
     @property
     def playlist_name(self):
         """
-        Returns the file name of the current playlist
+        Returns the file name of the last loaded playlist
         :return: File name
         """
         if self._playlist_file_path != "":
             return basename(self._playlist_file_path)
         return "..."
+
+    @property
+    def playlist_count(self):
+        """
+        HOw many playlist files are loaded into this playlist
+        :return: The number of playlists that have been loaded
+        """
+        return self._loaded_playlist_count
 
     def get_item_key_value(self, item, key):
         """

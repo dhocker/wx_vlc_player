@@ -125,8 +125,8 @@ class Player(wx.Frame):
         """
         # Load the last set of playlists
         playlists = self._config[Configuration.CFG_PLAYLISTS]
-        for playlist in playlists:
-            self._load_playlist(playlist)
+        if len(playlists) > 0:
+            self._load_playlists(playlists)
 
     def on_close(self):
         # Save window location and size
@@ -157,7 +157,7 @@ class Player(wx.Frame):
         self._playlist_menu.Append(3, "Save playlist &as", "Save the playlist as...")
         self._playlist_menu.AppendSeparator()
         self._playlist_menu.Append(4, "&Close", "Quit")
-        self.Bind(wx.EVT_MENU, self.on_open_playlist, id=1)
+        self.Bind(wx.EVT_MENU, self._on_add_playlists, id=1)
         self.Bind(wx.EVT_MENU, self._on_save_playlist, id=2)
         self.Bind(wx.EVT_MENU, self._on_save_playlist_as, id=3)
         self.Bind(wx.EVT_MENU, self.on_exit, id=4)
@@ -329,6 +329,7 @@ class Player(wx.Frame):
 
             # Now, there's unsaved changes
             self._unsaved_playlist_changes = True
+            self._update_playlist_label()
 
             # If the playlist was empty, queue the first item ready to play
             if empty_playlist:
@@ -354,9 +355,9 @@ class Player(wx.Frame):
         # Track unsaved changes
         self._unsaved_playlist_changes = True
 
-    def on_open_playlist(self, evt):
+    def _on_add_playlists(self, evt):
         """
-        Let the user load a playlist file
+        Let the user load multiple playlist files
         :param evt:
         :return:
         """
@@ -369,44 +370,45 @@ class Player(wx.Frame):
 
         # We only support .m3u files. This is an arbitrary choice because that is what other players support
         dlg = wx.FileDialog(self,
-                            message="Choose a playlist file",
+                            message="Choose playlist file(s)",
                             defaultDir=self._config[Configuration.CFG_PLAYLIST_FOLDER],
                             wildcard="*.m3u",
-                            style=wx.FD_OPEN)  # XXX wx.OPEN
+                            style=wx.FD_OPEN | wx.FD_MULTIPLE)
         file_name = None
         if dlg.ShowModal() == wx.ID_OK:
-            file_name = joined(dlg.GetDirectory(), dlg.GetFilename())
+            file_paths = dlg.GetPaths()
             self._config[Configuration.CFG_PLAYLIST_FOLDER] = dlg.GetDirectory()
             Configuration.save_configuration()
-        # finally destroy the dialog
-        dlg.Destroy()
 
-        # Load the playlist
-        if file_name is not None:
-            self._load_playlist(file_name)
-            self._config[Configuration.CFG_PLAYLISTS].append(file_name)
+            # Load the playlists
+            self._load_playlists(file_paths)
+            self._config[Configuration.CFG_PLAYLISTS].extend(file_paths)
+
+            # Save paths of all loaded playlists
             self._unsaved_playlist_changes = len(self._config[Configuration.CFG_PLAYLISTS]) > 1
             Configuration.save_configuration()
 
-    def _load_playlist(self, file_name):
+        # finally destroy the dialog
+        dlg.Destroy()
+
+    def _load_playlists(self, file_paths):
         """
         Load the contents of a .m3u file as the current playlist
-        :param file_name: Full path file name
+        :param file_paths: List of playlist files to be loaded
         :return:
         """
-        # Loading a playlist can take some time
-        dlg = wx.GenericProgressDialog(f"Loading Playlist {basename(file_name)}", "", parent=self)
 
-        self._playlist_model.load_playlist(file_name)
-        self._playlist_panel.load_playlist(self._playlist_model.playlist_items)
+        # Load the list of playlist files
+        for i in range(len(file_paths)):
+            # Loading a playlist can take some time
+            self._playlist_model.load_playlist(file_paths[i])
+            self._playlist_panel.load_playlist(self._playlist_model.playlist_items)
+
         self._now_playing_item = 0
 
         # Queue the first file
         self._adapter.queue_media_file(None)
         self._now_playing_item = -1
-
-        # End the progress dialog
-        dlg.Destroy()
 
         # queue the first song to be played
         if self._playlist_model.playlist_length > 0:
@@ -414,6 +416,9 @@ class Player(wx.Frame):
                 self._queue_file_for_play(random.randrange(self._playlist_model.playlist_length))
             else:
                 self._queue_file_for_play(0)
+
+        # Update the playlist panel
+        self._update_playlist_label()
 
     def _queue_file_for_play(self, item):
         """
@@ -425,7 +430,6 @@ class Player(wx.Frame):
         if os.path.exists(file_path):
             self._adapter.queue_media_file(file_path)
             self._set_current_song_label(self._playlist_model.get_item_key_value(item, PlaylistModel.PMI_NAME))
-            self._set_current_playlist_label(f"{self._playlist_model.playlist_name} ({self._playlist_model.playlist_length} items)")
 
             # set the window id where to render video output
             handle = self._playlist_panel.GetHandle()
@@ -470,6 +474,7 @@ class Player(wx.Frame):
 
         self._now_playing_item = -1
         self._set_current_playlist_label("...")
+        self._transport_panel.set_now_playing("...")
 
         # Disable the transport controls
         self._transport_panel.enable_play_button(False)
@@ -518,7 +523,7 @@ class Player(wx.Frame):
             # Save the current playlist
             path_name = file_dialog.GetPath()
             self._playlist_model.save_playlist_as(path_name)
-            self._set_current_playlist_label(f"{self._playlist_model.playlist_name} ({self._playlist_model.playlist_length} items)")
+            self._update_playlist_label()
             # Update the config file to reflect the new playlist
             self._config[Configuration.CFG_PLAYLISTS] = [path_name]
             Configuration.save_configuration()
@@ -569,7 +574,7 @@ class Player(wx.Frame):
         # Pause/Stop to Play
         # If the playlist is empty force user to load one
         if self._now_playing_item < 0:
-            self.on_open_playlist(None)
+            self._on_add_playlists(None)
             return
         else:
             self._adapter.volume = self._current_volume
@@ -695,6 +700,17 @@ class Player(wx.Frame):
         wx_evt = self._song_position_changed_event()
         # post the event to the Player frame
         wx.PostEvent(self, wx_evt)
+
+    def _update_playlist_label(self):
+        """
+        Update the playlist panel label to reflect the current state
+        :return:
+        """
+        # Update the playlist panel
+        self._set_current_playlist_label(f"{'*' if self._unsaved_playlist_changes else ''}"
+                                         f"{self._playlist_model.playlist_name} "
+                                         f"({self._playlist_model.playlist_count} playlists)"
+                                         f"({self._playlist_model.playlist_length} items)")
 
     def _show_about_dlg(self, evt):
         """
