@@ -52,8 +52,10 @@ cd wx_vlc_player
 ```
 
 ## User Interface <a id="user-interface"></a>
-The user interface is based on a playlist and player transport. A playlist is a standard .m3u file created with a text editor or another app like VLC. You can create a playlist with a text editor by simply adding
-lines where each line is the full path to a media file.
+The user interface is based on a playlist and player transport. A playlist file is a standard .m3u file created with wxVLCPlayer, a text editor or another app like VLC. 
+You can create a playlist file with a text editor by simply adding
+lines where each line is the full path to a media file. The active playlist can contain
+one or more playlist files.
 
 For example, an example.m3u might look like this.
 
@@ -63,8 +65,32 @@ For example, an example.m3u might look like this.
 /Users/username/Music/artist/track3.mp3
 ```
 
-Once you have loaded a playlist you can start a track by pressing the play button or double clicking
-on the track.
+Once you have loaded one or more playlist files you can start a track by pressing 
+the play button or double clicking on the track.
+
+### Adding Playlist Files to the Playlist
+Use the **Playlist | Add/Append** menu item to select one or more playlist files
+to be added to the end of the playlist.
+
+### Adding Media Files to the Playlist
+Use the **Edit | Add files** menu item to select one or more media files
+to be added to the end of the playlist.
+
+### Play a Media File
+To play a media file, click on the item and then click the Play button. Or, simply 
+double-click the item.
+
+### Saving the Playlist as a Playlist File
+Use the **Playlist | Save playlist** menu item to save the current playlist 
+in the **last loaded** playlist file (as shown in the playlist title).
+Use the **Playlist | Save playlist as** menu item to save the currently playlist in
+a new playlist file.
+
+### Delete Playlist Items
+Use the **Edit | Delete from playlist** menu item to delete all selected playlist items.
+
+### Clearing the Playlist
+Use the **Edit | Clear playlist** menu item to remove all of the items from the current playlist.
 
 ## References <a id="references"></a>
 * [wxPython](https://www.wxpython.org/)
