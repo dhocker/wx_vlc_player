@@ -18,6 +18,7 @@
 
 import os
 import json
+import platform
 
 
 class Configuration():
@@ -131,6 +132,7 @@ class Configuration():
         sl = s.lower()
         return sl in ["true", "yes"]
 
+
     @staticmethod
     def to_bool_string(b) -> str:
         """
@@ -139,3 +141,27 @@ class Configuration():
         :return:
         """
         return Configuration.CFG_TRUE if b else Configuration.CFG_FALSE
+
+    @staticmethod
+    def is_windows():
+        """
+        Is this Windows?
+        :return: True if it's Windows
+        """
+        return platform.system().lower() == "windows"
+
+    @staticmethod
+    def is_macos():
+        """
+        Is this macOS?
+        :return: True if it's macOS
+        """
+        return platform.system().lower() == "darwin"
+
+    @staticmethod
+    def is_linux():
+        """
+        Is this Linux?
+        :return: True if it's Linux
+        """
+        return platform.system().lower() == "linux"
