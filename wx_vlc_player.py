@@ -159,8 +159,13 @@ class Player(wx.Frame):
             "height": r.height
         }
 
+        # Save the playlist column widths
+        self._config[Configuration.CFG_COLUMN_WIDTHS] = self._playlist_panel.column_widths
+
         # Save the current volume setting
         self._config[Configuration.CFG_VOLUME] = self._current_volume
+
+        # Persist all config settings
         Configuration.save_configuration()
 
         # Handle unsaved changes
@@ -224,7 +229,8 @@ class Player(wx.Frame):
         self._playlist_panel = PlaylistPanel(self,
                                              item_activated_handler=self._on_playlist_dbl_click,
                                              item_selected_handler=self._on_playlist_single_click,
-                                             item_toggled_handler=self._on_playlist_item_toggled)
+                                             item_toggled_handler=self._on_playlist_item_toggled,
+                                             column_widths=self._config[Configuration.CFG_COLUMN_WIDTHS])
 
         # Handle keyboard events, treat space bar as play/pause
         # self._playlist_panel.Bind(wx.EVT_CHAR, self._on_keyboard_char)

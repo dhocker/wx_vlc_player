@@ -31,6 +31,7 @@ class Configuration():
         "volume": 50,
         "rect": {"x": -1, "y": -1, "width": 550, "height": 500},
         "random-play": "False",
+        "column_widths": [270, 250, 175, 50],
     }
 
     # Keys
@@ -40,6 +41,7 @@ class Configuration():
     CFG_VOLUME = "volume"  # last volume setting
     CFG_RECT = "rect"  # position and size of app window
     CFG_RANDOM_PLAY = "random-play"
+    CFG_COLUMN_WIDTHS = "column_widths"
 
     # Values
     CFG_TRUE = "True"

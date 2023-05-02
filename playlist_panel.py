@@ -20,11 +20,14 @@ class PlaylistPanel(wx.Panel):
     ALBUM_COL = 1
     ARTIST_COL = 2
     TIME_COL = 3
+    COLUMN_COUNT = TIME_COL + 1
 
     def __init__(self, parent,
                  item_selected_handler=None,
                  item_activated_handler=None,
-                 item_toggled_handler=None):
+                 item_toggled_handler=None,
+                 column_widths=[270, 250, 175, 50]
+                 ):
         super().__init__(parent)
 
         self.SetDoubleBuffered(True)
@@ -54,10 +57,10 @@ class PlaylistPanel(wx.Panel):
         # self._playlist.SetHeaderAttr(attr)
 
         # Define columns
-        self._playlist.AppendColumn('Song', width=270)
-        self._playlist.AppendColumn('Album', width=250)
-        self._playlist.AppendColumn('Artist', width=175)
-        self._playlist.AppendColumn('Time', width=50)
+        self._playlist.AppendColumn('Song', width=column_widths[0])
+        self._playlist.AppendColumn('Album', width=column_widths[1])
+        self._playlist.AppendColumn('Artist', width=column_widths[2])
+        self._playlist.AppendColumn('Time', width=column_widths[3])
 
         # Playlist ListCtrl events
         self._item_selected_handler = item_selected_handler
@@ -187,3 +190,14 @@ class PlaylistPanel(wx.Panel):
 
     def set_current_playlist_label(self, label):
         self._current_playlist_label.SetLabelText(label)
+
+    @property
+    def column_widths(self):
+        """
+        Return a list of the playlist column widths
+        :return: A list of integer values
+        """
+        column_widths = []
+        for c in range(PlaylistPanel.COLUMN_COUNT):
+            column_widths.append(self._playlist.GetColumnWidth(c))
+        return column_widths
