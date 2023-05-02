@@ -27,6 +27,7 @@ class Configuration():
     _active_config = {
         "playlist_folder": "",
         "playlists": [],
+        "files_folder": "",
         "volume": 50,
         "rect": {"x": -1, "y": -1, "width": 550, "height": 500},
         "random-play": "False",
@@ -110,12 +111,18 @@ class Configuration():
         """
         Returns the full path to the configuration file
         """
-        home_dir = f"{os.environ.get('HOME')}/.wx_vlc_player"
+        if Configuration.is_macos() or Configuration.is_linux():
+            home_dir = f"{os.environ.get('HOME')}/.wx_vlc_player"
+        elif Configuration.is_windows():
+            home_dir = f"{os.environ.get('LOCALAPPDATA')}\\wx_vlc_player"
+        else:
+            # Default to the current working directory
+            home_dir = os.getcwd()
         file_name = os.path.join(home_dir, "wx_vlc_player.conf")
         if not os.path.isfile(file_name):
             # Create initial version of configuration file
             try:
-                os.mkdir(home_dir)
+                os.makedirs(home_dir, exist_ok=True)
             except FileExistsError:
                 pass
             except Exception as ex:

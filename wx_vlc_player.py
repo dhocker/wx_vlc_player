@@ -95,6 +95,10 @@ class Player(wx.Frame):
         self._timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self._on_timer_tick, self._timer)
 
+        # Handle frame close via closer
+        self.Bind(wx.EVT_CLOSE, self._on_close_frame)
+        self._closed_flag = False
+
         # VLC player controls
         self._adapter = VLCMediaAdapter(media_player_end_handler=self._on_next_song_event,
                                         media_player_position_changed_handler=self._on_position_changed_event)
@@ -128,7 +132,24 @@ class Player(wx.Frame):
         if len(playlists) > 0:
             self._load_playlists(playlists)
 
+    def _on_close_frame(self, event):
+        """
+        Handle frame closed by menu item or closer button
+        :param event: Not used
+        :return: None
+        """
+        self.on_close()
+        self.Destroy()
+
     def on_close(self):
+        """
+        Save app state at close
+        :return: None
+        """
+        # Avoid more than one call
+        if self._closed_flag:
+            return
+
         # Save window location and size
         r = self.GetRect()
         self._config[Configuration.CFG_RECT] = {
@@ -146,6 +167,9 @@ class Player(wx.Frame):
         if self._unsaved_playlist_changes:
             self._save_playlist_as("There are unsaved playlist list changes. Do you want to save them?")
 
+        # Avoid repeat handling
+        self._closed_flag = True
+
     def _create_menubar(self):
         self.frame_menubar = wx.MenuBar()
 
@@ -160,7 +184,7 @@ class Player(wx.Frame):
         self.Bind(wx.EVT_MENU, self._on_add_playlists, id=1)
         self.Bind(wx.EVT_MENU, self._on_save_playlist, id=2)
         self.Bind(wx.EVT_MENU, self._on_save_playlist_as, id=3)
-        self.Bind(wx.EVT_MENU, self.on_exit, id=4)
+        self.Bind(wx.EVT_MENU, self._on_close_frame, id=4)
 
         # Edit menu
         self._edit_menu = wx.Menu()
@@ -185,6 +209,12 @@ class Player(wx.Frame):
             about_menuitem = wx.MenuItem(osx_menu, 999, f"About {app_name}")
             osx_menu.Insert(0, about_menuitem)
             self.Bind(wx.EVT_MENU, self._show_about_dlg, id=999)
+        elif os_id == wx.OS_WINDOWS_NT:
+            # Windows gets its own Help menu item
+            self._help_menu = wx.Menu()
+            self._help_menu.Append(900, "&About", "About wxVLCPlayer")
+            self.frame_menubar.Append(self._help_menu, "&Help")
+            self.Bind(wx.EVT_MENU, self._show_about_dlg, id=900)
         else:
             # TODO Create Help/About menu/item for other OSes
             pass
@@ -292,11 +322,6 @@ class Player(wx.Frame):
         :return:
         """
         self._transport_panel.set_now_playing(label)
-
-    def on_exit(self, evt):
-        """Closes the window.
-        """
-        self.Close()
 
     def _on_add_to_playlist(self, evt):
         """
@@ -751,7 +776,8 @@ if __name__ == "__main__":
     try:
         # This will fail if the app is killed from the dock
         player.on_close()
-    except:
+    except Exception as ex:
         print("Did not run on_close")
+        print(str(ex))
         # Since on_close did not run, try to save the current configuration
         Configuration.save_configuration()
