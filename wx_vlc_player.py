@@ -230,6 +230,7 @@ class Player(wx.Frame):
                                              item_activated_handler=self._on_playlist_dbl_click,
                                              item_selected_handler=self._on_playlist_single_click,
                                              item_toggled_handler=self._on_playlist_item_toggled,
+                                             file_drop_handler=self._on_file_drop,
                                              column_widths=self._config[Configuration.CFG_COLUMN_WIDTHS])
 
         # Handle keyboard events, treat space bar as play/pause
@@ -351,20 +352,11 @@ class Player(wx.Frame):
             file_paths = dlg.GetPaths()
             # Add to model
             # Update playlist panel
-            self._playlist_model.append_to_playlist(file_paths)
-            self._playlist_panel.load_playlist(self._playlist_model.playlist_items)
+            self._add_files_to_playlist(-1, file_paths)
 
             # Save directory where files originated
             self._config[Configuration.CFG_FILES_FOLDER] = dlg.GetDirectory()
             Configuration.save_configuration()
-
-            # Now, there's unsaved changes
-            self._unsaved_playlist_changes = True
-            self._update_playlist_label()
-
-            # If the playlist was empty, queue the first item ready to play
-            if empty_playlist:
-                self._queue_file_for_play(0)
 
     def _on_delete_from_playlist(self, evt):
         """
@@ -434,6 +426,7 @@ class Player(wx.Frame):
             # Loading a playlist can take some time
             self._playlist_model.load_playlist(file_paths[i])
             self._playlist_panel.load_playlist(self._playlist_model.playlist_items)
+            self._unsaved_playlist_changes = True
 
         self._now_playing_item = 0
 
@@ -582,6 +575,15 @@ class Player(wx.Frame):
         :return: None
         """
         self._on_play_clicked()
+
+    def _on_file_drop(self, item, file_paths):
+        """
+        Add a list of files to the current playlist (at the end for now)
+        :param file_paths:
+        :return:
+        """
+        # Insert intor playlist before the given item
+        self._add_files_to_playlist(item, file_paths)
 
     def _on_play_clicked(self):
         """
@@ -742,6 +744,34 @@ class Player(wx.Frame):
                                          f"{self._playlist_model.playlist_name} "
                                          f"({self._playlist_model.playlist_count} playlists)"
                                          f"({self._playlist_model.playlist_length} items)")
+
+    def _add_files_to_playlist(self, before_item, file_paths):
+        """
+        Insert a list of files before a given item
+        :param before_item: If -1, insert at end. If >=0 insert before item
+        :param file_paths: List of file paths to be inserted
+        :return:
+        """
+        # If the playlist is currently empty, we'll treat adding files
+        # like a playlist being loaded.
+        empty_playlist = self._playlist_model.playlist_length == 0
+
+        # Add to model
+        if before_item < 0:
+            self._playlist_model.append_to_playlist(file_paths)
+        else:
+            # Insert files before item
+            self._playlist_model.insert_into_playlist(before_item, file_paths)
+        # Update playlist panel
+        self._playlist_panel.load_playlist(self._playlist_model.playlist_items)
+
+        # Now, there's unsaved changes
+        self._unsaved_playlist_changes = True
+        self._update_playlist_label()
+
+        # If the playlist was empty, queue the first item ready to play
+        if empty_playlist:
+            self._queue_file_for_play(0)
 
     def _show_about_dlg(self, evt):
         """

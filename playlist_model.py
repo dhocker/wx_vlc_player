@@ -93,6 +93,18 @@ class PlaylistModel:
         new_items = PlaylistModel._create_item_list(file_paths)
         self._playlist_items.extend(new_items)
 
+    def insert_into_playlist(self, before_item, file_paths):
+        """
+        Insert a list of files into the playlist before a given item
+        :param before_item: 0-n
+        :param file_paths: List of files to be inserted
+        :return: None
+        """
+        new_items = PlaylistModel._create_item_list(file_paths)
+        # Going backwards, insert the items
+        for i in range(len(new_items) - 1, -1, -1):
+            self._playlist_items.insert(before_item, new_items[i])
+
     def clear_playlist(self):
         """
         Clear the current playlist

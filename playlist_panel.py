@@ -14,6 +14,44 @@ import wx
 from song_utils import format_time
 
 
+drop_event, EVT_DROP_EVENT = wx.lib.newevent.NewEvent()
+
+
+class PLaylistFileDropTarget(wx.FileDropTarget):
+    """
+    Handle DnD file drops
+    """
+    def __init__(self, window):
+        """
+        Create a drop target for incoming files
+        :param window: The control being dropped on
+        """
+        super().__init__()
+        self._window = window
+
+    def OnDropFiles(self, x, y, file_names):
+        """
+        This code assumes that the callback is not called on
+        the UI thread. Hence, it posts an event to the UI thread essentially
+        relaying the drop event to the UI thread.
+        :param x: mouse x coord
+        :param y: mouse y coord
+        :param file_names: A list of strings where each item is a path
+        :return: None
+        """
+        data = {
+            "x": x,
+            "y": y,
+            "file_names": file_names
+        }
+
+        # Post a drop even to the UI thread
+        evt = drop_event(data=data)
+        wx.PostEvent(self._window, evt)
+
+        return True
+
+
 class PlaylistPanel(wx.Panel):
     # Class definitions
     SONG_COL = 0
@@ -26,6 +64,7 @@ class PlaylistPanel(wx.Panel):
                  item_selected_handler=None,
                  item_activated_handler=None,
                  item_toggled_handler=None,
+                 file_drop_handler=None,
                  column_widths=[270, 250, 175, 50]
                  ):
         super().__init__(parent)
@@ -79,8 +118,30 @@ class PlaylistPanel(wx.Panel):
         self._item_toggled_handler = item_toggled_handler
         self._playlist.Bind(wx.EVT_CHAR, self._on_keyboard_char)
 
+        # Handle DnD drop events
+        self._file_drop_handler = file_drop_handler
+        self._file_drop_target = PLaylistFileDropTarget(self._playlist)
+        self._playlist.SetDropTarget(self._file_drop_target)
+        # parent or listctrl
+        self._playlist.Bind(EVT_DROP_EVENT, self._drop_files)
+
     def clear_playlist(self):
         self._playlist.DeleteAllItems()
+
+    def _drop_files(self, event):
+        """
+        Handle actual dropping of files.
+        This is equivalent to adding files to the end, for now.
+        :param event: Relayed event
+        :return:
+        """
+        # The data is a dict. See the PlaylistFileDropTarget.OnDropFiles
+        data = event.data
+        item, flags = self._playlist.HitTest((data["x"], data["y"]))
+        # print(item, flags, flags and wx.LIST_HITTEST_ONITEM)
+        # Call back to the parent to pass the data
+        if self._file_drop_handler is not None:
+            self._file_drop_handler(item, data["file_names"])
 
     def load_playlist(self, song_list):
         """
