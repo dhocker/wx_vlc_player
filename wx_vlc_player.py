@@ -493,6 +493,10 @@ class Player(wx.Frame):
         if self._is_playing():
             self._on_stop_clicked()
 
+        # Handle unsaved changes
+        if self._unsaved_playlist_changes:
+            self._save_playlist_as("There are unsaved playlist list changes. Do you want to save them?")
+
         self._playlist_model.clear_playlist()
         self._playlist_panel.clear_playlist()
 
