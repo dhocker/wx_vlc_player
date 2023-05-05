@@ -9,7 +9,7 @@ https://bitbucket.org/ronaldoussoren/py2app/issues/219/new-mach-o-header-is-too-
 
 from setuptools import setup
 
-APP = ['wx_vlc_player.py']
+APP = ['wx_vlc_app.py']
 DATA_FILES = [
     ("images", [
         "resources/wx_vlc_player.gif",

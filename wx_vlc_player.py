@@ -809,29 +809,3 @@ class Player(wx.Frame):
             f"wxPython Version: {wx.version()}\n"
 
         show_info_message(self, dlg_text, app_title)
-
-
-if __name__ == "__main__":
-    # Load configuration
-    Configuration.load_configuration()
-
-    # Create a wx.App(), which handles the windowing system event loop
-    app = wx.App(clearSigInt=True)  # XXX wx.PySimpleApp()
-    # Create the window containing our media player
-    player = Player()
-    # show the player window centred
-    player.Centre()
-    player.Show()
-
-    # run the application
-    app.MainLoop()
-
-    # Clean up, save persistent configuration data
-    try:
-        # This will fail if the app is killed from the dock
-        player.on_close()
-    except Exception as ex:
-        print("Did not run on_close")
-        print(str(ex))
-        # Since on_close did not run, try to save the current configuration
-        Configuration.save_configuration()
