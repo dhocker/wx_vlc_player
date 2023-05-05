@@ -65,12 +65,14 @@ class PlaylistPanel(wx.Panel):
                  item_activated_handler=None,
                  item_toggled_handler=None,
                  file_drop_handler=None,
+                 file_move_handler=None,
                  column_widths=[270, 250, 175, 50]
                  ):
         super().__init__(parent)
 
         self.SetDoubleBuffered(True)
         self._selected_item = -1
+        # Currently, this is a list of the files in the playlist
         self._song_list = []
 
         # Currently playing song and its playlist
@@ -124,9 +126,51 @@ class PlaylistPanel(wx.Panel):
         self._playlist.SetDropTarget(self._file_drop_target)
         # parent or listctrl
         self._playlist.Bind(EVT_DROP_EVENT, self._drop_files)
+        self._playlist.Bind(wx.EVT_LIST_BEGIN_DRAG, self._on_drag_init)
+        self._file_move_handler = file_move_handler
+
+    def _on_drag_init(self, event):
+        # Create the source file object
+        files = wx.FileDataObject()
+
+        # We'll keep a list of the DnD source items
+        items_to_drop = []
+
+        selected_index = self._playlist.GetFirstSelected()
+        while selected_index >= 0:
+            items_to_drop.append(selected_index)
+            files.AddFile(self._song_list[selected_index])
+            selected_index = self._playlist.GetNextSelected(selected_index)
+
+        self._drag_source = wx.DropSource(self._playlist)
+        self._drag_source.SetData(files)
+
+        # Note that this call DOES NOT return until the DnD is finished
+        result = self._drag_source.DoDragDrop(True)
+
+        # After the drop completes, the drop target needs to be adjusted
+        # self._drop_target_item += len(items_to_drop)
+
+        # If this is a drag-move, we need to delete the left-behind source items
+        if result == wx.DragMove:
+            # Delete the source items
+            # Note that the drop target item value is from BEFORE the drop files were inserted
+            # After the drop, the drop target item is offset by the number of files dropped
+            # Likewise, the items that were moved may need offset adjustment
+            for i in range(len(items_to_drop)):
+                if items_to_drop[i] > self._drop_target_item:
+                    items_to_drop[i] += len(items_to_drop)
+            self._drop_target_item += len(items_to_drop)
+            # Give the drop/move handler adjusted items
+            if self._file_move_handler is not None:
+                self._file_move_handler(self._drop_target_item, items_to_drop)
+        elif result == wx.DragCopy:
+            # We don't have to do anything with the drag source
+            pass
 
     def clear_playlist(self):
         self._playlist.DeleteAllItems()
+        self._song_list.clear()
 
     def _drop_files(self, event):
         """
@@ -138,6 +182,12 @@ class PlaylistPanel(wx.Panel):
         # The data is a dict. See the PlaylistFileDropTarget.OnDropFiles
         data = event.data
         item, flags = self._playlist.HitTest((data["x"], data["y"]))
+        # Determine "drop in front of" item
+        if item < 0:
+            # The drop target is after the last item
+            self._drop_target_item = len(self._song_list)
+        else:
+            self._drop_target_item = item
         # print(item, flags, flags and wx.LIST_HITTEST_ONITEM)
         # Call back to the parent to pass the data
         if self._file_drop_handler is not None:

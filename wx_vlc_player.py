@@ -231,6 +231,7 @@ class Player(wx.Frame):
                                              item_selected_handler=self._on_playlist_single_click,
                                              item_toggled_handler=self._on_playlist_item_toggled,
                                              file_drop_handler=self._on_file_drop,
+                                             file_move_handler=self._on_file_drop_move,
                                              column_widths=self._config[Configuration.CFG_COLUMN_WIDTHS])
 
         # Handle keyboard events, treat space bar as play/pause
@@ -583,11 +584,24 @@ class Player(wx.Frame):
     def _on_file_drop(self, item, file_paths):
         """
         Add a list of files to the current playlist (at the end for now)
-        :param file_paths:
-        :return:
+        :param item: The item index where files are to be inserted BEFORE.
+        :param file_paths: A list of file paths to be dropped in fron of the item
+        :return: None
         """
         # Insert intor playlist before the given item
         self._add_files_to_playlist(item, file_paths)
+
+    def _on_file_drop_move(self, drop_target_item, items_to_move):
+        """
+        Handle playlist items that were moved via DnD
+        :param drop_target_item: The drop target item index AFTER the drop.
+        :param items_to_move: The items (their indexes) that were moved (adjusted for the drop)
+        :return: None
+        """
+        # Remove moved items
+        self._playlist_model.delete_items(items_to_move)
+        # Reload the playlist panel
+        self._playlist_panel.load_playlist(self._playlist_model.playlist_items)
 
     def _on_play_clicked(self):
         """
