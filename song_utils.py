@@ -25,3 +25,22 @@ def format_time(t):
         # mm:ss
         result = f"{m:0d}:{s:02d}"
     return result
+
+
+def is_media_file(file_path):
+    """
+    Validates the file path as an acceptable file type
+    :param file_path: Full file path.
+    :return: True if file is acceptable.
+    """
+    ext = file_path[-4:]
+    return ext in [".mp3", ".wav", ".mp4", ".mkv"]
+
+
+def is_playlist_file(file_path):
+    """
+    Validates the file path as a .m3u playlist file.
+    :param file_path: Full path to the playlist file.
+    :return: True if the file extension is .m3u
+    """
+    return file_path[-4:] == ".m3u"

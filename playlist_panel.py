@@ -11,7 +11,7 @@
 
 
 import wx
-from song_utils import format_time
+from song_utils import format_time, is_media_file
 
 
 drop_event, EVT_DROP_EVENT = wx.lib.newevent.NewEvent()
@@ -191,7 +191,14 @@ class PlaylistPanel(wx.Panel):
         # print(item, flags, flags and wx.LIST_HITTEST_ONITEM)
         # Call back to the parent to pass the data
         if self._file_drop_handler is not None:
-            self._file_drop_handler(item, data["file_names"])
+            # Validate files
+            file_paths = []
+            for f in data["file_names"]:
+                if is_media_file(f):
+                    file_paths.append(f)
+            # Pass validated file list to callback
+            if len(file_paths) > 0:
+                self._file_drop_handler(item, file_paths)
 
     def load_playlist(self, song_list):
         """
