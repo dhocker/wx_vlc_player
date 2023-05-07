@@ -14,6 +14,7 @@ import wx
 from os.path import basename, splitext
 from urllib.parse import unquote
 from mutagen.mp3 import MP3
+from song_utils import is_media_file
 from wx_utils import show_error_message
 
 
@@ -62,7 +63,7 @@ class PlaylistModel:
 
                 ext = splitext(rec)
                 # Supported file types
-                if ext[1] in [".mp3", ".wav", ".aac", ".mp4", ".mkv"]:
+                if is_media_file(ext[1]):
                     song_files.append(rec)
                     dlg.Pulse(basename(rec))
             rec = fh.readline()
