@@ -44,3 +44,12 @@ def is_playlist_file(file_path):
     :return: True if the file extension is .m3u
     """
     return file_path[-4:] == ".m3u"
+
+
+def is_valid_filetype(file_path):
+    """
+    Is a file path a recognized file type?
+    :param file_path: Full path to file
+    :return: True if the file path is valid
+    """
+    return is_media_file(file_path) or is_playlist_file(file_path)

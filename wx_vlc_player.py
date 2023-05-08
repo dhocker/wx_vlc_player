@@ -588,7 +588,7 @@ class Player(wx.Frame):
         :param file_paths: A list of file paths to be dropped in fron of the item
         :return: None
         """
-        # Insert intor playlist before the given item
+        # Insert into playlist before the given item
         self._add_files_to_playlist(item, file_paths)
 
     def _on_file_drop_move(self, drop_target_item, items_to_move):

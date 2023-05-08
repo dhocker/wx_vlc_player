@@ -11,7 +11,7 @@
 
 
 import wx
-from song_utils import format_time, is_media_file
+from song_utils import format_time, is_valid_filetype
 
 
 drop_event, EVT_DROP_EVENT = wx.lib.newevent.NewEvent()
@@ -194,7 +194,8 @@ class PlaylistPanel(wx.Panel):
             # Validate files
             file_paths = []
             for f in data["file_names"]:
-                if is_media_file(f):
+                # TODO This is probably NOT a "view" responsibility
+                if is_valid_filetype(f):
                     file_paths.append(f)
             # Pass validated file list to callback
             if len(file_paths) > 0:

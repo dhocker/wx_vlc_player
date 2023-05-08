@@ -14,7 +14,7 @@ import wx
 from os.path import basename, splitext
 from urllib.parse import unquote
 from mutagen.mp3 import MP3
-from song_utils import is_media_file
+from song_utils import is_media_file, is_playlist_file
 from wx_utils import show_error_message
 
 
@@ -47,26 +47,7 @@ class PlaylistModel:
         """
         # Loading a playlist can take some time
         dlg = wx.GenericProgressDialog(f"Loading Playlist {basename(file_name)}", "")
-
-        fh = open(file_name, "r")
-        rec = fh.readline()
-        # A simple list of all the file_paths in the .m3u file
-        song_files = []
-        while rec:
-            if not rec.startswith("#"):
-                rec = rec.replace("\n", "")
-
-                # For VLC created playlists
-                rec = rec.replace("file://", "")
-                # Handle url encoded strings from VLC playlists
-                rec = unquote(rec)
-
-                ext = splitext(rec)
-                # Supported file types
-                if is_media_file(ext[1]):
-                    song_files.append(rec)
-                    dlg.Pulse(basename(rec))
-            rec = fh.readline()
+        song_files = self._read_playlist_file(file_name, progress_dlg=dlg)
 
         # File list with info   `
         dlg.Pulse("Reading file tags...")
@@ -91,7 +72,7 @@ class PlaylistModel:
         :param file_paths: A list of file paths (strings)
         :return: None
         """
-        new_items = PlaylistModel._create_item_list(file_paths)
+        new_items = PlaylistModel._create_item_list(self._expand_file_list(file_paths))
         self._playlist_items.extend(new_items)
 
     def insert_into_playlist(self, before_item, file_paths):
@@ -101,10 +82,25 @@ class PlaylistModel:
         :param file_paths: List of files to be inserted
         :return: None
         """
-        new_items = PlaylistModel._create_item_list(file_paths)
+        new_items = PlaylistModel._create_item_list(self._expand_file_list(file_paths))
         # Going backwards, insert the items
         for i in range(len(new_items) - 1, -1, -1):
             self._playlist_items.insert(before_item, new_items[i])
+
+    def _expand_file_list(self, file_paths):
+        """
+        Expand a file list by expanding .m3u files
+        :param file_paths: List of paths to files
+        :return: List of media files
+        """
+        files = []
+        for f in file_paths:
+            if is_playlist_file(f):
+                files.extend(self._read_playlist_file(f))
+            else:
+                files.append(f)
+
+        return files
 
     def clear_playlist(self):
         """
@@ -139,6 +135,44 @@ class PlaylistModel:
             show_error_message(None, f"{str(ex)}", f"Unable to save {file_path}")
 
         return saved
+
+    def _read_playlist_file(self, file_name, progress_dlg=None):
+        """
+        Read the contents of a .m3u file. This method filters out the
+        extended .m3u info created by VLC.
+        :param file_name: Full path to the .m3u file
+        :param progress_dlg: A progress dialog to be pulsed for each file
+        :return: List of media files in the .m3u file
+        """
+
+        fh = open(file_name, "r")
+        rec = fh.readline()
+        # A simple list of all the file_paths in the .m3u file
+        song_files = []
+        while rec:
+            if not rec.startswith("#"):
+                rec = rec.replace("\n", "")
+
+                # For VLC created playlists
+                rec = rec.replace("file://", "")
+                # Handle url encoded strings from VLC playlists
+                rec = unquote(rec)
+
+                ext = splitext(rec)
+                # Supported file types
+                if is_media_file(ext[1]):
+                    song_files.append(rec)
+                    if progress_dlg is not None:
+                        progress_dlg.Pulse(basename(rec))
+                elif is_playlist_file(ext[1]):
+                    if progress_dlg is not None:
+                        progress_dlg.Pulse(basename(rec))
+                    # Use recursion to read the contents of the .m3u file
+                    playlist_files = self._read_playlist_file(rec, progress_dlg=progress_dlg)
+                    song_files.extend(playlist_files)
+            rec = fh.readline()
+
+        return song_files
 
     @staticmethod
     def _create_item_list(songs, progress_dlg=None):
