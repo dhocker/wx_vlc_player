@@ -69,11 +69,11 @@ class Player(wx.Frame):
         self._config = Configuration.get_configuration()
         fr = self._config[Configuration.CFG_RECT]
 
-        wx.Frame.__init__(self, None,
-                          id=-1,
-                          title=app_title,
-                          pos=(fr["x"], fr["y"]),
-                          size=(fr["width"], fr["height"]))
+        super().__init__(None,
+                         id=-1,
+                         title=app_title,
+                         pos=(fr["x"], fr["y"]),
+                         size=(fr["width"], fr["height"]))
         self._now_playing_item = -1
         self._playlist_model = PlaylistModel()
         self._current_volume = self._config[Configuration.CFG_VOLUME]
