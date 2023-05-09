@@ -80,15 +80,6 @@ class Player(wx.Frame):
         self._random_play = Configuration.to_bool(self._config[Configuration.CFG_RANDOM_PLAY])
         self.SetDoubleBuffered(True)
 
-        # A large font
-        self._large_bold_font = wx.Font(16,
-                                        family=wx.FONTFAMILY_SWISS,
-                                        style=0,
-                                        weight=wx.FONTWEIGHT_BOLD,
-                                        underline=False,
-                                        faceName="",
-                                        encoding=wx.FONTENCODING_DEFAULT)
-
         self._create_widgets()
 
         # Create the timer, which updates the time slider
