@@ -131,6 +131,8 @@ class Player(wx.Frame):
         playlists = self._config[Configuration.CFG_PLAYLISTS]
         if len(playlists) > 0:
             self._load_playlists(playlists)
+            # Update the playlist panel label to indicate change status
+            self._update_playlist_label()
 
     def _on_close_frame(self, event):
         """
@@ -412,6 +414,9 @@ class Player(wx.Frame):
             self._unsaved_playlist_changes = len(self._config[Configuration.CFG_PLAYLISTS]) > 1
             Configuration.save_configuration()
 
+            # Update the playlist panel label to indicate change status
+            self._update_playlist_label()
+
         # finally destroy the dialog
         dlg.Destroy()
 
@@ -427,7 +432,6 @@ class Player(wx.Frame):
             # Loading a playlist can take some time
             self._playlist_model.load_playlist(file_paths[i])
             self._playlist_panel.load_playlist(self._playlist_model.playlist_items)
-            self._unsaved_playlist_changes = True
 
         self._now_playing_item = 0
 
@@ -441,9 +445,6 @@ class Player(wx.Frame):
                 self._queue_file_for_play(random.randrange(self._playlist_model.playlist_length))
             else:
                 self._queue_file_for_play(0)
-
-        # Update the playlist panel
-        self._update_playlist_label()
 
     def _queue_file_for_play(self, item):
         """
