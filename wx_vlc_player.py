@@ -296,7 +296,7 @@ class Player(wx.Frame):
             song_time = self._adapter.media_time
             # Handle case where the actual track length exceeds estimated track length
             song_length = max(self._playlist_model.get_item_key_value(self._now_playing_item, PlaylistModel.PMI_TIME),
-                              int(self._adapter.media_time))
+                              int(self._adapter.media_duration))
             self._transport_panel.set_current_time(song_time)
 
             # Update song position in normal time format
@@ -335,7 +335,7 @@ class Player(wx.Frame):
         # like a playlist being loaded.
         empty_playlist = self._playlist_model.playlist_length == 0
 
-        wildcard = "Audio files (*.mp3;*.wav)|*.mp3;*.wav|Video files (*.mp4;*.mkv)|*.mp4;*.mkv"
+        wildcard = "Audio files (*.mp3;*.wav)|*.mp3;*.wav|Video files (*.mp4;*.mkv;*.avi)|*.mp4;*.mkv;*.avi"
         dlg = wx.FileDialog(self,
                             message="Choose files to add to playlist",
                             defaultDir=self._config[Configuration.CFG_FILES_FOLDER],
@@ -427,7 +427,7 @@ class Player(wx.Frame):
         self._now_playing_item = 0
 
         # Queue the first file
-        self._adapter.queue_media_file(None)
+        # self._adapter.queue_media_file(None)
         self._now_playing_item = -1
 
         # queue the first song to be played
@@ -458,6 +458,8 @@ class Player(wx.Frame):
 
             # Set the ranges of the time slider
             song_length = self._playlist_model.get_item_key_value(item, PlaylistModel.PMI_TIME)
+            if song_length == 0:
+                song_length = self._adapter.media_duration
             self._transport_panel.set_time_range(0, song_length)
 
             self._now_playing_item = item

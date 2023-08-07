@@ -34,7 +34,7 @@ def is_media_file(file_path):
     :return: True if file is acceptable.
     """
     ext = file_path[-4:]
-    return ext in [".mp3", ".wav", ".aac", ".mp4", ".mkv"]
+    return ext in [".mp3", ".wav", ".aac", ".mp4", ".mkv", ".avi"]
 
 
 def is_playlist_file(file_path):

@@ -49,6 +49,10 @@ class VLCMediaAdapter(MediaAdapter):
         :return:
         """
         self._media = self._vlc_instance.media_new(str(file_name))
+        self._media.parse_with_options(vlc.MediaParseFlag.local, -1)
+        status = self._media.get_parsed_status()
+        while status != vlc.MediaParsedStatus.done:
+            status = self._media.get_parsed_status()
         self._player.set_media(self._media)
 
     @property
