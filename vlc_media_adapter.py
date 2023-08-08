@@ -10,31 +10,46 @@
 
 
 import sys
-from time import sleep
 from media_adapter import MediaAdapter
 import vlc
 
 
 class VLCMediaAdapter(MediaAdapter):
     """
-    Designed to be subclassed for a specific media player like VLC
+    Designed to be a singleton instance of the VLC player
     """
     def __init__(self,
                  media_player_end_handler=None,
                  media_player_position_changed_handler=None):
+        """
+        Initialize the class singleton
+        :param media_player_end_handler:
+        :param media_player_position_changed_handler:
+        """
         super().__init__(media_player_end_handler=media_player_end_handler,
                          media_player_position_changed_handler=media_player_position_changed_handler)
 
-        self._vlc_instance = vlc.Instance()
-        self._player = self._vlc_instance.media_player_new()
-        self._media = None
+        # One time initialization of the singleton
+        if not hasattr(self, "_vlc_instance"):
+            self._vlc_instance = vlc.Instance()
+            self._player = self._vlc_instance.media_player_new()
+            self._media = None
 
-        # VLC events to be handled
-        self._event_manager = self._player.event_manager()
-        # Track/song end
-        self._event_manager.event_attach(vlc.EventType.MediaPlayerEndReached, self._on_media_player_end)
-        # Track song position?
-        self._event_manager.event_attach(vlc.EventType.MediaPlayerPositionChanged, self._on_media_player_position_changed)
+            # VLC events to be handled
+            self._event_manager = self._player.event_manager()
+            # Track/song end
+            self._event_manager.event_attach(vlc.EventType.MediaPlayerEndReached, self._on_media_player_end)
+            # Track song position?
+            self._event_manager.event_attach(vlc.EventType.MediaPlayerPositionChanged, self._on_media_player_position_changed)
+
+    def __new__(cls, media_player_end_handler=None,
+                     media_player_position_changed_handler=None):
+        """
+        Create a singleton instance of the class
+        """
+        if not hasattr(cls, 'instance'):
+            cls.instance = super().__new__(cls)
+        return cls.instance
 
     def open(self):
         pass
@@ -48,12 +63,21 @@ class VLCMediaAdapter(MediaAdapter):
         :param file_name: Full path of media file
         :return:
         """
-        self._media = self._vlc_instance.media_new(str(file_name))
-        self._media.parse_with_options(vlc.MediaParseFlag.local, -1)
-        status = self._media.get_parsed_status()
-        while status != vlc.MediaParsedStatus.done:
-            status = self._media.get_parsed_status()
+        self._media = self.open_media_file(file_name)
         self._player.set_media(self._media)
+
+    def open_media_file(self, file_name):
+        """
+        Open a media file for access
+        :param file_name: Full path of media file
+        :return:
+        """
+        media = self._vlc_instance.media_new(str(file_name))
+        media.parse_with_options(vlc.MediaParseFlag.local, -1)
+        status = media.get_parsed_status()
+        while status != vlc.MediaParsedStatus.done:
+            status = media.get_parsed_status()
+        return media
 
     @property
     def is_playing(self):

@@ -15,8 +15,11 @@ class MediaAdapter:
     def __init__(self,
                  media_player_end_handler=None,
                  media_player_position_changed_handler=None):
-        self._media_player_end_handler = media_player_end_handler
-        self._media_player_position_changed_handler = media_player_position_changed_handler
+        # Only capture event handlers if they are provided
+        if media_player_end_handler is not None:
+            self._media_player_end_handler = media_player_end_handler
+        if media_player_position_changed_handler is not None:
+            self._media_player_position_changed_handler = media_player_position_changed_handler
 
     def open(self):
         pass
@@ -27,6 +30,14 @@ class MediaAdapter:
     def queue_media_file(self, file_name):
         """
         Prepare a media file for playing
+        :param file_name: Full path of media file
+        :return:
+        """
+        pass
+
+    def open_media_file(self, file_name):
+        """
+        Open a media file for access
         :param file_name: Full path of media file
         :return:
         """

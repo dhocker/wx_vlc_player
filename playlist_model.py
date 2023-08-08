@@ -16,6 +16,7 @@ from urllib.parse import unquote
 from mutagen.mp3 import MP3
 from song_utils import is_media_file, is_playlist_file
 from wx_utils import show_error_message
+from vlc_media_adapter import VLCMediaAdapter
 
 
 class PlaylistModel:
@@ -38,6 +39,7 @@ class PlaylistModel:
         self._playlist_items = []
         self._playlist_file_path = ""
         self._loaded_playlist_count = 0
+        self._adapter = VLCMediaAdapter()
 
     def load_playlist(self, file_name):
         """
@@ -52,7 +54,7 @@ class PlaylistModel:
         # File list with info   `
         dlg.Pulse("Reading file tags...")
         # Build the item list from the list of file_paths
-        new_items = PlaylistModel._create_item_list(song_files, progress_dlg=dlg)
+        new_items = self._create_item_list(song_files, progress_dlg=dlg)
         self._playlist_items.extend(new_items)
 
         # End the progress dialog
@@ -72,7 +74,7 @@ class PlaylistModel:
         :param file_paths: A list of file paths (strings)
         :return: None
         """
-        new_items = PlaylistModel._create_item_list(self._expand_file_list(file_paths))
+        new_items = self._create_item_list(self._expand_file_list(file_paths))
         self._playlist_items.extend(new_items)
 
     def insert_into_playlist(self, before_item, file_paths):
@@ -82,7 +84,7 @@ class PlaylistModel:
         :param file_paths: List of files to be inserted
         :return: None
         """
-        new_items = PlaylistModel._create_item_list(self._expand_file_list(file_paths))
+        new_items = self._create_item_list(self._expand_file_list(file_paths))
         # Going backwards, insert the items
         for i in range(len(new_items) - 1, -1, -1):
             self._playlist_items.insert(before_item, new_items[i])
@@ -174,8 +176,7 @@ class PlaylistModel:
 
         return song_files
 
-    @staticmethod
-    def _create_item_list(songs, progress_dlg=None):
+    def _create_item_list(self, songs, progress_dlg=None):
         """
         Create a song list with song info
         :param songs: A list of song paths
@@ -193,6 +194,7 @@ class PlaylistModel:
             song_time = 0
             ext = splitext(file_path)
             if ext[1] == ".mp3":
+                # Use mutagen to extract tags from mp3 file
                 try:
                     mp3 = MP3(file_path)
                     name = PlaylistModel._get_tag(mp3, "TIT2", default_value=basename(file_path))
@@ -208,8 +210,11 @@ class PlaylistModel:
                 except Exception as ex:
                     name = file_path
             else:
-                # How to handle other file types
+                # Use VLC to determine duration of other file types
                 name = basename(file_path)
+                media = self._adapter.open_media_file(file_path)
+                song_time = int(media.get_duration() / 1000)
+                media.release()
 
             song = {
                 PlaylistModel.PMI_FILE_PATH: file_path,
