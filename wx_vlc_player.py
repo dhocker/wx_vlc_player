@@ -53,7 +53,7 @@ from wx_utils import show_info_message, show_error_message
 from os.path import basename, join as joined
 
 app_name = "wxVLCPlayer"
-app_title = "wxPython VLC Music Player"
+app_title = f"wxPython VLC Music Player {version.version}"
 
 
 class Player(wx.Frame):
