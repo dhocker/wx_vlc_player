@@ -38,6 +38,8 @@ Date: 23-11-2010
 
 import os
 import random
+import time
+
 import wx  # 2.8 ... 4.0.6
 import wx.lib.newevent
 from vlc_media_adapter import VLCMediaAdapter
@@ -125,6 +127,28 @@ class Player(wx.Frame):
             # Update the playlist panel label to indicate change status
             self._update_playlist_label()
 
+            # Restore current song and position
+            self._now_playing_item = self._config[Configuration.CFG_CURRENT_SONG_INDEX]
+            self._queue_file_for_play(self._now_playing_item)
+
+            song_time = self._config[Configuration.CFG_CURRENT_SONG_POSITION]
+            song_length = max(self._playlist_model.get_item_key_value(self._now_playing_item, PlaylistModel.PMI_TIME),
+                              int(self._adapter.media_duration))
+            self._transport_panel.set_current_time(song_time)
+
+            # Update song position in normal time format
+            self._transport_panel.set_current_song_position(format_time(song_time),
+                                                                        format_time(song_length))
+            if song_time > 0:
+                self._transport_panel.set_play_button_icon(True)
+                self._transport_panel.enable_stop_button(True)
+                self._adapter.play()
+                self._adapter.media_time = song_time
+                # For whatever reason, this sleep is required to give VLC
+                # time to start playing. The pause occurs so fast it is not noticed.
+                time.sleep(0.1)
+                self._adapter.pause()
+
     def _on_close_frame(self, event):
         """
         Handle frame closed by menu item or closer button
@@ -157,6 +181,10 @@ class Player(wx.Frame):
 
         # Save the current volume setting
         self._config[Configuration.CFG_VOLUME] = self._current_volume
+
+        # Save current song and position
+        self._config[Configuration.CFG_CURRENT_SONG_POSITION] = self._adapter.media_time
+        self._config[Configuration.CFG_CURRENT_SONG_INDEX] = self._now_playing_item
 
         # Persist all config settings
         Configuration.save_configuration()

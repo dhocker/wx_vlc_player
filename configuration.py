@@ -42,6 +42,8 @@ class Configuration():
     CFG_RECT = "rect"  # position and size of app window
     CFG_RANDOM_PLAY = "random-play"
     CFG_COLUMN_WIDTHS = "column_widths"
+    CFG_CURRENT_SONG_INDEX = "current_song_index"
+    CFG_CURRENT_SONG_POSITION = "current_song_position"
 
     # Values
     CFG_TRUE = "True"
