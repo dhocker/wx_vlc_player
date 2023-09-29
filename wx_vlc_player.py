@@ -716,7 +716,17 @@ class Player(wx.Frame):
         pass
 
     def _on_time_slider_change(self, new_time):
-        self._adapter.media_time = new_time
+        if self._adapter.is_playing:
+            # If something is playing, the position can be set directly
+            self._adapter.media_time = new_time
+        else:
+            # If nothing is playing we have to game VLC as it must be playing to set the time
+            self._adapter.play()
+            self._adapter.media_time = new_time
+            # For whatever reason, this sleep is required to give VLC
+            # time to start playing. The pause occurs so fast it is not really noticed.
+            time.sleep(0.1)
+            self._adapter.pause()
 
     def _on_random_changed(self, random_play):
         """
