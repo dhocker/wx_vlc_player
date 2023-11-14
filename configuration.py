@@ -32,6 +32,7 @@ class Configuration():
         "rect": {"x": -1, "y": -1, "width": 550, "height": 500},
         "random-play": "False",
         "column_widths": [270, 250, 175, 50],
+        "recent_playlists": [],
     }
 
     # Keys
@@ -44,6 +45,7 @@ class Configuration():
     CFG_COLUMN_WIDTHS = "column_widths"
     CFG_CURRENT_SONG_INDEX = "current_song_index"
     CFG_CURRENT_SONG_POSITION = "current_song_position"
+    CFG_RECENT_PLAYLISTS = "recent_playlists"
 
     # Values
     CFG_TRUE = "True"

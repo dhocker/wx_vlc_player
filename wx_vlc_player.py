@@ -202,6 +202,10 @@ class Player(wx.Frame):
         #   File Menu
         self._playlist_menu = wx.Menu()
         self._playlist_menu.Append(1, "&Add/append a playlist file", "Add/append a playlist file")
+        self._recent_playlist_menu = wx.Menu()
+        self._update_recent_playlist_menu()
+        self._playlist_menu.AppendSubMenu(self._recent_playlist_menu, "Add/append &recent playlist file")
+        self._update_recent_playlist_menu()
         self._playlist_menu.AppendSeparator()
         self._playlist_menu.Append(2, "&Save playlist", "Save the playlist")
         self._playlist_menu.Append(3, "Save playlist &as", "Save the playlist as...")
@@ -244,6 +248,22 @@ class Player(wx.Frame):
         else:
             # TODO Create Help/About menu/item for other OSes
             pass
+
+    def _update_recent_playlist_menu(self):
+        """
+        Rebuild the recent playlist submenu
+        :return: None
+        """
+        # Remove all the playlist menu items
+        for menu_item in self._recent_playlist_menu.GetMenuItems():
+            self._recent_playlist_menu.Delete(menu_item)
+
+        # Create new menu items for current list of used playlists
+        id = 21  # Purely arbitrary but should be unique
+        for playlist in self._config[Configuration.CFG_RECENT_PLAYLISTS]:
+            self._recent_playlist_menu.Append(id, playlist)
+            self.Bind(wx.EVT_MENU, self._on_add_recent_playlist, id=id)
+            id += 1
 
     def _create_playlist(self):
         # The first panel holds the playlist
@@ -425,19 +445,59 @@ class Player(wx.Frame):
             self._config[Configuration.CFG_PLAYLIST_FOLDER] = dlg.GetDirectory()
             Configuration.save_configuration()
 
-            # Load the playlists
-            self._load_playlists(file_paths)
-            self._config[Configuration.CFG_PLAYLISTS].extend(file_paths)
-
-            # Save paths of all loaded playlists
-            self._unsaved_playlist_changes = len(self._config[Configuration.CFG_PLAYLISTS]) > 1
-            Configuration.save_configuration()
-
-            # Update the playlist panel label to indicate change status
-            self._update_playlist_label()
+            # Add the playlists to the app
+            self._add_playlist_files(file_paths)
 
         # finally destroy the dialog
         dlg.Destroy()
+
+    def _update_recent_playlists(self, playlists):
+        """
+        Update the configuration list of recently used playlists
+        :param playlists: A list of playlists (file paths)
+        :return: None
+        """
+        cfg_recent_playlists = self._config[Configuration.CFG_RECENT_PLAYLISTS]
+        for p in playlists:
+            if p in cfg_recent_playlists:
+                continue
+            cfg_recent_playlists.insert(0, p)
+
+        # Trim the list to 10 items
+        while len(cfg_recent_playlists) > 10:
+            cfg_recent_playlists.pop()
+
+        Configuration.save_configuration()
+
+    def _on_add_recent_playlist(self, evt):
+        """
+        Add a recently used playlist
+        :param evt: Menu event
+        :return:
+        """
+        playlists = [self._recent_playlist_menu.GetLabelText(evt.Id)]
+        self._add_playlist_files(playlists)
+
+    def _add_playlist_files(self, file_paths):
+        """
+        Add one or more playlist files to the app
+        :param file_paths: A list of playlist paths
+        :return: None
+        """
+        # Load the playlists
+        self._load_playlists(file_paths)
+        self._config[Configuration.CFG_PLAYLISTS].extend(file_paths)
+
+        # Update the recent playlists list
+        self._update_recent_playlists(file_paths)
+        self._update_recent_playlist_menu()
+
+        # Save paths of all loaded playlists
+        self._unsaved_playlist_changes = len(self._config[Configuration.CFG_PLAYLISTS]) > 1
+        Configuration.save_configuration()
+
+        # Update the playlist panel label to indicate change status
+        self._update_playlist_label()
 
     def _load_playlists(self, file_paths):
         """
