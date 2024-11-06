@@ -69,6 +69,11 @@ cd wx_vlc_player
 ./build_app.sh
 ```
 
+#### Issues with wxPython 4.2.2
+The most current version of wxPython is 4.2.2. There are issues installing it. See 
+[wxPython Issue 2614](https://github.com/wxWidgets/Phoenix/issues/2614). As a result,
+this project uses wxPython 4.2.0.
+
 ## User Interface <a id="user-interface"></a>
 The user interface is based on a playlist and player transport. 
 A playlist file is a standard .m3u file created with wxVLCPlayer, a text editor or another app like VLC. 
