@@ -3,7 +3,8 @@
 # Build macOS X version of wxVLCPlayer app
 
 source `which virtualenvwrapper.sh`
-workon vlc3
+# workon vlc3
+workon wx_vlc_player3
 
 if [[ $# == 1 ]] && [[ $1 == "-incr" ]]; then
   python increment_version.py build
