@@ -5,6 +5,6 @@ mutagen==1.46.0
 numpy==1.24.2
 Pillow==9.4.0
 py2app==0.28.6
-python-vlc==3.0.18122
+python-vlc==3.0.21203
 six==1.16.0
 wxPython==4.2.0
