@@ -458,9 +458,10 @@ class Player(wx.Frame):
         :return: None
         """
         cfg_recent_playlists = self._config[Configuration.CFG_RECENT_PLAYLISTS]
+        # Make sure the recently added playlists are at the top of the list
         for p in playlists:
             if p in cfg_recent_playlists:
-                continue
+                cfg_recent_playlists.remove(p)
             cfg_recent_playlists.insert(0, p)
 
         # Trim the list to 10 items
@@ -477,6 +478,8 @@ class Player(wx.Frame):
         """
         playlists = [self._recent_playlist_menu.GetLabelText(evt.Id)]
         self._add_playlist_files(playlists)
+
+        # TODO Move selected playlist to the top of the recently used playlists
 
     def _add_playlist_files(self, file_paths):
         """
