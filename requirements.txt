@@ -7,4 +7,5 @@ Pillow==9.4.0
 py2app==0.28.6
 python-vlc==3.0.21203
 six==1.16.0
+wakepy==0.10.2.post1
 wxPython==4.2.0

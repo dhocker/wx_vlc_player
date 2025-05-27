@@ -50,6 +50,7 @@ from transport_panel import TransportPanel
 from playlist_model import PlaylistModel
 from song_utils import format_time
 from wx_utils import show_info_message, show_error_message
+from wake_thread import WakeThread
 
 # import standard libraries
 from os.path import basename, join as joined
@@ -114,6 +115,9 @@ class Player(wx.Frame):
 
         # Start with no unsaved changes
         self._unsaved_playlist_changes = False
+
+        # Keep awake
+        self._wake_thread = None
 
     def _on_start_up(self, event):
         """
@@ -706,6 +710,11 @@ class Player(wx.Frame):
         self._transport_panel.set_play_button_icon(True)
         self._transport_panel.enable_stop_button(True)
 
+        self._wake_thread.terminate()
+        self._wake_thread.join()
+        del self._wake_thread
+        self._wake_thread = None
+
     def _pause_to_play(self):
         # Pause/Stop to Play
         # If the playlist is empty force user to load one
@@ -721,6 +730,10 @@ class Player(wx.Frame):
             # Show the pause icon
             self._transport_panel.set_play_button_icon(False)
             self._transport_panel.enable_stop_button(True)
+
+            if self._wake_thread is None:
+                self._wake_thread = WakeThread()
+                self._wake_thread.start()
 
     def _is_playing(self):
         """
@@ -738,6 +751,11 @@ class Player(wx.Frame):
         self._timer.Stop()
         self._transport_panel.set_play_button_icon(True)
         self._transport_panel.enable_stop_button(False)
+
+        self._wake_thread.terminate()
+        self._wake_thread.join()
+        del self._wake_thread
+        self._wake_thread = None
 
     def _on_previous_clicked(self):
         """
